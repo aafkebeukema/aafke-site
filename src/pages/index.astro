@@ -1,28 +1,83 @@
 ---
 import Layout from '../layouts/Layout.astro';
+
+const services = [
+  {
+    name: 'Custom AI automations',
+    price: 'from £150 per project',
+    body: 'The repetitive parts of running your business, handled. Chasing payments, sorting enquiries into a to-do list, pulling scattered information into one place you can actually read.',
+  },
+  {
+    name: 'Custom websites',
+    price: 'from £250 per project',
+    body: 'A fast, clean site that works properly on a phone and says what you do. Built to load quickly and be easy to change later — no template subscription, no page builder lock-in.',
+  },
+];
+
+const examples = [
+  'A dashboard showing which clients have paid this month and which need chasing',
+  'Customer WhatsApp messages turned into prioritised tasks, filed against the right client',
+  'A website for a joinery and design studio',
+  'A watcher that tracks house prices in one neighbourhood',
+  'Browser games built for and with my kids',
+];
 ---
 
-<Layout>
+<Layout
+  title="Aafke Beukema — AI automations and websites"
+  description="I build custom AI automations and websites for small businesses. Practical tools that save you time, from £150 per project."
+>
   <main>
     <header class="masthead">
-      <h1>Aafke Beukema</h1>
+      <p class="eyebrow">Aafke Beukema</p>
+      <h1>I build small, practical tools that give you your time back.</h1>
       <p class="tagline">
-        One line on what you do and who you do it for. Replace this.
+        Custom AI automations and websites for people running a business without
+        a technical team behind them. Scope and price agreed together, up front.
       </p>
     </header>
 
-    <section>
-      <h2>What I do</h2>
+    <section aria-labelledby="services">
+      <h2 id="services">What I do</h2>
+      <div class="services">
+        {services.map((service) => (
+          <article>
+            <h3>{service.name}</h3>
+            <p class="price">{service.price}</p>
+            <p>{service.body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section aria-labelledby="examples">
+      <h2 id="examples">The kind of thing that's possible</h2>
+      <ul class="examples">
+        {examples.map((example) => <li>{example}</li>)}
+      </ul>
+    </section>
+
+    <section aria-labelledby="about">
+      <h2 id="about">Why me</h2>
       <p>
-        Two or three sentences on the service you offer. Keep it concrete — the
-        problem you solve and the kind of client you solve it for. Replace this.
+        I spent around eight years at Monzo working in engineering, AI and
+        product delivery — shipping software that real customers depended on
+        every day. I now build the same quality of thing at a much smaller
+        scale, for people who'd otherwise be stuck doing it by hand.
+      </p>
+      <p class="spaced">
+        I'll tell you honestly if automation isn't the answer for your problem.
       </p>
     </section>
 
-    <section>
-      <h2>Get in touch</h2>
+    <section aria-labelledby="contact">
+      <h2 id="contact">Get in touch</h2>
       <p>
-        <a href="mailto:hello@aafke.co.uk">hello@aafke.co.uk</a>
+        Tell me what's taking up your time and I'll tell you whether I can help.
+        No charge for that conversation.
+      </p>
+      <p class="spaced">
+        <a class="cta" href="mailto:hello@aafke.co.uk">hello@aafke.co.uk</a>
       </p>
     </section>
 
@@ -40,22 +95,31 @@ import Layout from '../layouts/Layout.astro';
   }
 
   .masthead {
-    margin-bottom: 4rem;
+    margin-bottom: 5rem;
+  }
+
+  .eyebrow {
+    margin: 0 0 1.5rem;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
   }
 
   h1 {
-    font-size: clamp(2.25rem, 7vw, 3rem);
-  }
-
-  .tagline {
-    margin: 1rem 0 0;
-    font-size: 1.1875rem;
-    color: var(--muted);
+    font-size: clamp(1.9rem, 5.5vw, 2.6rem);
     text-wrap: balance;
   }
 
+  .tagline {
+    margin: 1.5rem 0 0;
+    font-size: 1.1875rem;
+    color: var(--muted);
+    text-wrap: pretty;
+  }
+
   section {
-    margin-bottom: 3rem;
+    margin-bottom: 4rem;
   }
 
   h2 {
@@ -65,11 +129,56 @@ import Layout from '../layouts/Layout.astro';
     color: var(--muted);
     padding-bottom: 0.75rem;
     border-bottom: 1px solid var(--rule);
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.75rem;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .services {
+    display: grid;
+    gap: 2.5rem;
+  }
+
+  .price {
+    margin: 0.375rem 0 0.875rem;
+    font-size: 0.9375rem;
+    color: var(--muted);
+  }
+
+  .examples {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .examples li {
+    padding: 0.875rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .examples li:first-child {
+    padding-top: 0;
   }
 
   p {
     margin: 0;
+    text-wrap: pretty;
+  }
+
+  .spaced {
+    margin-top: 1.25rem;
+  }
+
+  .cta {
+    font-size: 1.1875rem;
+    font-weight: 500;
+    border-bottom-width: 2px;
+    border-bottom-color: var(--muted);
   }
 
   footer {
@@ -78,5 +187,12 @@ import Layout from '../layouts/Layout.astro';
     border-top: 1px solid var(--rule);
     font-size: 0.875rem;
     color: var(--muted);
+  }
+
+  @media (min-width: 34rem) {
+    .services {
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
   }
 </style>
