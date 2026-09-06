@@ -1,0 +1,82 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout>
+  <main>
+    <header class="masthead">
+      <h1>Aafke Beukema</h1>
+      <p class="tagline">
+        One line on what you do and who you do it for. Replace this.
+      </p>
+    </header>
+
+    <section>
+      <h2>What I do</h2>
+      <p>
+        Two or three sentences on the service you offer. Keep it concrete — the
+        problem you solve and the kind of client you solve it for. Replace this.
+      </p>
+    </section>
+
+    <section>
+      <h2>Get in touch</h2>
+      <p>
+        <a href="mailto:hello@aafke.co.uk">hello@aafke.co.uk</a>
+      </p>
+    </section>
+
+    <footer>
+      <p>&copy; {new Date().getFullYear()} Aafke Beukema</p>
+    </footer>
+  </main>
+</Layout>
+
+<style>
+  main {
+    max-width: var(--measure);
+    margin: 0 auto;
+    padding: 6rem 1.5rem 4rem;
+  }
+
+  .masthead {
+    margin-bottom: 4rem;
+  }
+
+  h1 {
+    font-size: clamp(2.25rem, 7vw, 3rem);
+  }
+
+  .tagline {
+    margin: 1rem 0 0;
+    font-size: 1.1875rem;
+    color: var(--muted);
+    text-wrap: balance;
+  }
+
+  section {
+    margin-bottom: 3rem;
+  }
+
+  h2 {
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 1.25rem;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  footer {
+    margin-top: 5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.875rem;
+    color: var(--muted);
+  }
+</style>
