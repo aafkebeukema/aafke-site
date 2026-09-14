@@ -108,13 +108,13 @@ const examples = [
                 <div class="cell colhead last">Rate</div>
 
                 <div class="cell rownum">2</div>
-                <div class="cell">Mon 15 Sep</div>
+                <div class="cell">Tue 15 Sep</div>
                 <div class="cell">Amara</div>
                 <div class="cell">Full day</div>
                 <div class="cell last">£58</div>
 
                 <div class="cell rownum alt">3</div>
-                <div class="cell alt">Wed 17 Sep</div>
+                <div class="cell alt">Thu 17 Sep</div>
                 <div class="cell alt">Theo</div>
                 <div class="cell alt">Morning</div>
                 <div class="cell alt last">£34</div>
@@ -195,11 +195,10 @@ const examples = [
     <section aria-labelledby="about">
       <h2 id="about">Why me</h2>
       <p>
-        I spent eleven years in engineering, AI and product delivery at
-        Monzo and Citymapper, shipping software that real customers
-        depended on every day. I now build the same quality of thing at a
-        much smaller scale, for people who'd otherwise be stuck doing it
-        by hand.
+        I spent around eight years at Monzo working in engineering, AI and
+        product delivery, shipping software that real customers depended on
+        every day. I now build the same quality of thing at a much smaller
+        scale, for people who'd otherwise be stuck doing it by hand.
       </p>
       <p class="spaced">
         I'll tell you honestly if automation isn't the answer for your problem.
@@ -382,18 +381,9 @@ const examples = [
     padding-left: 0.25rem;
   }
 
-  /* Only widen into a side-by-side layout once there's genuinely enough
-     room for the note beside the mockup (this section also breaks out of
-     the article's narrow reading measure at this breakpoint, see below). */
-  @media (min-width: 64rem) {
-    .case-study {
-      max-width: 50rem;
-      margin-left: calc((31rem - 50rem) / 2);
-      margin-right: calc((31rem - 50rem) / 2);
-    }
+  @media (min-width: 34rem) {
     .row {
       grid-template-columns: 4.5rem 1fr 13rem;
-      gap: 1rem 1.5rem;
     }
     .note {
       grid-column: 3;
