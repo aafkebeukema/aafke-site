@@ -160,9 +160,15 @@ const examples = [
             <div class="daysheet">
               <div class="daysheet-title">Thursday 24 September</div>
               <div class="daysheet-who"><strong>Who's in:</strong> Amara (18mo), Theo (3), Clara (4)</div>
-              <div class="daysheet-slot"><strong>Morning,</strong> messy play &amp; playdough</div>
-              <div class="daysheet-slot"><strong>After lunch,</strong> garden time, bikes and scooters</div>
-              <div class="daysheet-slot"><strong>Three o'clock,</strong> story and songs before pick-up</div>
+              <div class="daysheet-section">Meals</div>
+              <div class="daysheet-slot"><strong>Breakfast,</strong> toast and fruit</div>
+              <div class="daysheet-slot"><strong>Lunch,</strong> chicken pasta bake, sweetcorn</div>
+              <div class="daysheet-slot"><strong>Tea,</strong> beans on toast, cucumber sticks</div>
+              <div class="daysheet-section">Activities &amp; learning</div>
+              <div class="daysheet-slot"><strong>Morning,</strong> messy play &amp; playdough <span class="daysheet-tag">· Physical development</span></div>
+              <div class="daysheet-slot"><strong>After lunch,</strong> garden time, bikes and scooters <span class="daysheet-tag">· Physical development</span></div>
+              <div class="daysheet-slot"><strong>Snack &amp; chat,</strong> fruit and milk, talking about the weekend <span class="daysheet-tag">· Communication &amp; language</span></div>
+              <div class="daysheet-slot"><strong>Three o'clock,</strong> story and songs before pick-up <span class="daysheet-tag">· Literacy</span></div>
             </div>
           </div>
           <div class="note">Thursday's planned before you've had your coffee.</div>
@@ -172,8 +178,8 @@ const examples = [
           <div class="time">5.30pm</div>
           <div class="mock">
             <div class="update">
-              <p>Busy one today! The little ones did playdough and messy play this morning, had a picnic lunch out in the garden, then story time before home time. Everyone's had a good nap too 😊</p>
-              <button id="copy-btn" class="btn copy" data-message="Busy one today! The little ones did playdough and messy play this morning, had a picnic lunch out in the garden, then story time before home time. Everyone's had a good nap too 😊">Copy message</button>
+              <p>Busy one today! Clara got stuck into messy play and playdough this morning, had chicken pasta bake for lunch, then bikes and scootering in the garden before story time. She's had a good nap too 😊</p>
+              <button id="copy-btn" class="btn copy" data-message="Busy one today! Clara got stuck into messy play and playdough this morning, had chicken pasta bake for lunch, then bikes and scootering in the garden before story time. She's had a good nap too 😊">Copy message</button>
             </div>
           </div>
           <div class="note">One paste into the group chat. Laptop shut, your day's done.</div>
@@ -446,11 +452,12 @@ const examples = [
     font-family: -apple-system, sans-serif;
     font-size: 12px;
     color: #333;
-    background-image: repeating-linear-gradient(#fdfdfb 0 26px, #dde 26px 27px);
-  }
+      }
   .daysheet-title { font-size: 14px; font-weight: 700; color: #223; margin-bottom: 8px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
-  .daysheet-who { margin-bottom: 8px; }
+  .daysheet-who { margin-bottom: 10px; }
+  .daysheet-section { font-size: 10px; font-weight: 600; color: #889; text-transform: uppercase; letter-spacing: 0.04em; margin: 10px 0 5px; }
   .daysheet-slot { margin-bottom: 5px; }
+  .daysheet-tag { color: #8a8; }
 
   /* update mockup */
   .update { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 14px 16px; max-width: 380px; font-family: -apple-system, sans-serif; }
