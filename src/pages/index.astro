@@ -27,6 +27,10 @@ const examples = [
   title="Aafke Beukema | AI automations and websites"
   description="I build custom AI automations and websites for small businesses. Practical tools that save you time, from £150 per project."
 >
+  <link
+    href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap"
+    rel="stylesheet"
+  />
   <main>
     <header class="masthead">
       <p class="eyebrow">Aafke Beukema</p>
@@ -50,6 +54,137 @@ const examples = [
       </div>
     </section>
 
+    <section aria-labelledby="case-study" class="case-study">
+      <h2 id="case-study">What that looks like in practice</h2>
+      <p class="case-intro">
+        Nothing new to learn, nothing for parents to install. Same spreadsheet,
+        same group chat, the repetitive part just gets done for her, this is a
+        Tuesday for a childminder client.
+      </p>
+
+      <div class="timeline">
+        <div class="row">
+          <div class="time">7.38am</div>
+          <div class="mock">
+            <div class="chat">
+              <div class="chat-head">
+                <span class="dot"></span>
+                <div>
+                  <div class="chat-title">Clara Childminding</div>
+                  <div class="chat-meta">Group · 3 members</div>
+                </div>
+              </div>
+              <div class="chat-body">
+                <div class="bubble-wrap">
+                  <div class="sender">Jo, Clara's mum</div>
+                  <div class="bubble">Hiya! Could we add Thurs &amp; Fri next week for Clara, full days both, if that's ok? 🙏</div>
+                  <div class="stamp">7:38</div>
+                </div>
+                <div class="bubble-wrap self">
+                  <div class="bubble self">Course we can, I'll get it booked in now 😊</div>
+                  <div class="stamp right">7:39 ✓✓</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="note">You screenshot it. That's the whole of your job here.</div>
+        </div>
+
+        <div class="row">
+          <div class="time">7.39am</div>
+          <div class="mock">
+            <div class="sheet">
+              <div class="grid">
+                <div class="cell head"></div>
+                <div class="cell head">A</div>
+                <div class="cell head">B</div>
+                <div class="cell head">C</div>
+                <div class="cell head last">D</div>
+
+                <div class="cell rownum">1</div>
+                <div class="cell colhead">Date</div>
+                <div class="cell colhead">Child</div>
+                <div class="cell colhead">Session</div>
+                <div class="cell colhead last">Rate</div>
+
+                <div class="cell rownum">2</div>
+                <div class="cell">Mon 15 Sep</div>
+                <div class="cell">Amara</div>
+                <div class="cell">Full day</div>
+                <div class="cell last">£58</div>
+
+                <div class="cell rownum alt">3</div>
+                <div class="cell alt">Wed 17 Sep</div>
+                <div class="cell alt">Theo</div>
+                <div class="cell alt">Morning</div>
+                <div class="cell alt last">£34</div>
+
+                <div class="cell rownum hl">4</div>
+                <div class="cell hl">Thu 24 Sep</div>
+                <div class="cell hl">Clara</div>
+                <div class="cell hl">Full day</div>
+                <div class="cell hl last">£62</div>
+
+                <div class="cell rownum hl">5</div>
+                <div class="cell hl">Fri 25 Sep</div>
+                <div class="cell hl">Clara</div>
+                <div class="cell hl">Full day</div>
+                <div class="cell hl last">£62</div>
+              </div>
+              <div class="tabs">
+                <div class="tab active">Bookings</div>
+                <div class="tab">Children</div>
+                <div class="tab">Rates</div>
+              </div>
+            </div>
+          </div>
+          <div class="note">The booking writes itself into your own file.</div>
+        </div>
+
+        <div class="row">
+          <div class="time">7.40am</div>
+          <div class="mock">
+            <div class="confirm">
+              <p>Clara, Thursday 24 &amp; Friday 25 September, full days at £62. Add both?</p>
+              <button class="btn yes">Yes, add them</button>
+              <button class="btn">Change something</button>
+              <button class="btn ghost">Not a booking</button>
+            </div>
+          </div>
+          <div class="note">Five seconds. Nothing saves without your say-so.</div>
+        </div>
+
+        <div class="row">
+          <div class="time">8.15am</div>
+          <div class="mock">
+            <div class="daysheet">
+              <div class="daysheet-title">Thursday 24 September</div>
+              <div class="daysheet-who"><strong>Who's in:</strong> Amara (18mo), Theo (3), Clara (4)</div>
+              <div class="daysheet-slot"><strong>Morning,</strong> messy play &amp; playdough</div>
+              <div class="daysheet-slot"><strong>After lunch,</strong> garden time, bikes and scooters</div>
+              <div class="daysheet-slot"><strong>Three o'clock,</strong> story and songs before pick-up</div>
+            </div>
+          </div>
+          <div class="note">Thursday's planned before you've had your coffee.</div>
+        </div>
+
+        <div class="row">
+          <div class="time">5.30pm</div>
+          <div class="mock">
+            <div class="update">
+              <p>Busy one today! The little ones did playdough and messy play this morning, had a picnic lunch out in the garden, then story time before home time. Everyone's had a good nap too 😊</p>
+              <button id="copy-btn" class="btn copy" data-message="Busy one today! The little ones did playdough and messy play this morning, had a picnic lunch out in the garden, then story time before home time. Everyone's had a good nap too 😊">Copy message</button>
+            </div>
+          </div>
+          <div class="note">One paste into the group chat. Laptop shut, your day's done.</div>
+        </div>
+      </div>
+
+      <p class="case-close">
+        A few hours back in your week, every week, and by month end, the invoices have already added themselves up.
+      </p>
+    </section>
+
     <section aria-labelledby="examples">
       <h2 id="examples">The kind of thing that's possible</h2>
       <ul class="examples">
@@ -60,10 +195,11 @@ const examples = [
     <section aria-labelledby="about">
       <h2 id="about">Why me</h2>
       <p>
-        I spent around eight years at Monzo working in engineering, AI and
-        product delivery, shipping software that real customers depended on
-        every day. I now build the same quality of thing at a much smaller
-        scale, for people who'd otherwise be stuck doing it by hand.
+        I spent eleven years in engineering, AI and product delivery at
+        Monzo and Citymapper, shipping software that real customers
+        depended on every day. I now build the same quality of thing at a
+        much smaller scale, for people who'd otherwise be stuck doing it
+        by hand.
       </p>
       <p class="spaced">
         I'll tell you honestly if automation isn't the answer for your problem.
@@ -85,6 +221,18 @@ const examples = [
       <p>&copy; {new Date().getFullYear()} Aafke Beukema</p>
     </footer>
   </main>
+
+  <script>
+    const btn = document.getElementById('copy-btn');
+    if (btn) {
+      btn.addEventListener('click', async () => {
+        await navigator.clipboard.writeText(btn.dataset.message || '');
+        const original = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = original; }, 1800);
+      });
+    }
+  </script>
 </Layout>
 
 <style>
@@ -194,5 +342,134 @@ const examples = [
       grid-template-columns: 1fr 1fr;
       gap: 2rem;
     }
+  }
+
+  /* Case study: a Tuesday at Sunny Days */
+  .case-intro {
+    color: var(--muted);
+    margin-bottom: 2.5rem;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 4.5rem 1fr;
+    gap: 1rem 1.25rem;
+    padding: 2rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .row:last-child {
+    border-bottom: none;
+  }
+
+  .time {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--muted);
+    padding-top: 0.9rem;
+  }
+
+  .mock {
+    min-width: 0;
+  }
+
+  .note {
+    grid-column: 1 / -1;
+    font-family: 'Caveat', cursive;
+    font-size: 1.25rem;
+    color: var(--ink);
+    transform: rotate(-1deg);
+    padding-left: 0.25rem;
+  }
+
+  /* Only widen into a side-by-side layout once there's genuinely enough
+     room for the note beside the mockup (this section also breaks out of
+     the article's narrow reading measure at this breakpoint, see below). */
+  @media (min-width: 64rem) {
+    .case-study {
+      max-width: 50rem;
+      margin-left: calc((31rem - 50rem) / 2);
+      margin-right: calc((31rem - 50rem) / 2);
+    }
+    .row {
+      grid-template-columns: 4.5rem 1fr 13rem;
+      gap: 1rem 1.5rem;
+    }
+    .note {
+      grid-column: 3;
+      padding-top: 0.9rem;
+    }
+  }
+
+  /* chat mockup */
+  .chat {
+    background: #fdfdfb;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    overflow: hidden;
+    max-width: 380px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+  }
+  .chat-head { display: flex; align-items: center; gap: 10px; background: #eee; padding: 10px 14px; border-bottom: 1px solid #ddd; }
+  .dot { width: 28px; height: 28px; border-radius: 50%; background: #9bb; flex: none; }
+  .chat-title { font-weight: 600; color: #333; }
+  .chat-meta { font-size: 11px; color: #777; }
+  .chat-body { padding: 12px; display: flex; flex-direction: column; gap: 8px; background: #f7f7f5; }
+  .bubble-wrap { max-width: 82%; }
+  .bubble-wrap.self { align-self: flex-end; }
+  .sender { font-size: 11px; color: #7a5a9a; font-weight: 600; margin-bottom: 2px; }
+  .bubble { background: #fff; border: 1px solid #e2e2e2; border-radius: 10px 10px 10px 2px; padding: 8px 11px; color: #222; }
+  .bubble.self { background: #cfe8cf; border-radius: 10px 10px 2px 10px; color: #1a2e1a; border: none; }
+  .stamp { font-size: 10px; color: #999; margin-top: 2px; }
+  .stamp.right { text-align: right; }
+
+  /* spreadsheet mockup */
+  .sheet { background: #fff; border: 1px solid #ccc; max-width: 420px; font-family: -apple-system, sans-serif; font-size: 12px; }
+  .grid { display: grid; grid-template-columns: 24px 1fr 1fr 1fr 1fr; }
+  .cell { border-bottom: 1px solid #eee; border-right: 1px solid #eee; padding: 4px 7px; color: #444; }
+  .cell.last { border-right: none; }
+  .cell.head { background: #eee; text-align: center; color: #777; border-bottom: 1px solid #ccc; }
+  .cell.rownum { background: #f2f2f2; text-align: center; color: #999; }
+  .cell.colhead { background: #e6e6e6; font-weight: 600; color: #222; }
+  .cell.alt { background: #fafafa; }
+  .cell.hl { background: #f3e08a; color: #3a3200; font-weight: 600; }
+  .tabs { display: flex; gap: 1px; background: #ccc; border-top: 1px solid #ccc; }
+  .tab { background: #eee; padding: 5px 12px; font-size: 11px; color: #777; }
+  .tab.active { background: #fff; color: #222; font-weight: 600; border-top: 2px solid var(--ink); }
+
+  /* confirm mockup */
+  .confirm { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 16px; max-width: 300px; font-family: -apple-system, sans-serif; }
+  .confirm p { font-size: 12.5px; color: #222; margin-bottom: 12px; }
+  .btn { display: block; width: 100%; text-align: left; border-radius: 5px; padding: 7px 9px; font-size: 12px; margin-bottom: 6px; border: 1px solid #ddd; background: #f5f5f5; color: #333; font-family: inherit; }
+  .btn:last-child { margin-bottom: 0; }
+  .btn.yes { background: #4a8a5a; color: #fff; border: none; font-weight: 600; }
+  .btn.ghost { background: #fff; color: #888; border: 1px solid #eee; }
+  .btn.copy { width: auto; background: #f0f0f0; font-weight: 600; }
+
+  /* day sheet mockup */
+  .daysheet {
+    background: #fdfdfb;
+    border: 1px solid #ccc;
+    padding: 14px 16px;
+    max-width: 400px;
+    font-family: -apple-system, sans-serif;
+    font-size: 12px;
+    color: #333;
+    background-image: repeating-linear-gradient(#fdfdfb 0 26px, #dde 26px 27px);
+  }
+  .daysheet-title { font-size: 14px; font-weight: 700; color: #223; margin-bottom: 8px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+  .daysheet-who { margin-bottom: 8px; }
+  .daysheet-slot { margin-bottom: 5px; }
+
+  /* update mockup */
+  .update { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 14px 16px; max-width: 380px; font-family: -apple-system, sans-serif; }
+  .update p { font-size: 13px; color: #222; margin-bottom: 10px; }
+
+  .case-close {
+    margin-top: 2.5rem;
+    font-size: 1.0625rem;
+    color: var(--muted);
+    font-style: italic;
   }
 </style>
