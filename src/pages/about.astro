@@ -8,7 +8,7 @@ import '../styles/page.css';
   description="I'm Aafke. I previously worked on digital products at Citymapper and Monzo, and now work directly with small businesses on AI automations and websites."
 >
   <main>
-    <header class="masthead">
+    <div class="about-top">
       <img
         class="portrait"
         src="/images/aafke-portrait.webp"
@@ -16,33 +16,33 @@ import '../styles/page.css';
         width="835"
         height="870"
       />
-      <div class="intro">
+      <div class="about-text">
         <h1>About me</h1>
         <p class="tagline">Hi, I'm Aafke.</p>
+
+        <section aria-labelledby="story">
+          <h2 id="story" class="visually-hidden">My background</h2>
+          <p>
+            I'm Dutch, and I've lived in London for most of my adult life. I've
+            always been drawn to practical problems: everyday things that are
+            more confusing, repetitive or frustrating than they need to be.
+          </p>
+          <p class="spaced">
+            I previously worked on digital products at Citymapper and Monzo. Now
+            I work directly with small businesses, creating useful AI
+            automations and carefully designed websites.
+          </p>
+          <p class="spaced">
+            I like listening closely, working out what the real problem is, and
+            making something that feels clear and manageable. Whether it's an
+            automation or a website, I want people to understand what I've built
+            and feel that it genuinely belongs to them.
+          </p>
+        </section>
       </div>
-    </header>
+    </div>
 
-    <section aria-labelledby="story">
-      <h2 id="story" class="visually-hidden">My background</h2>
-      <p>
-        I'm Dutch, and I've lived in London for most of my adult life. I've
-        always been drawn to practical problems: everyday things that are more
-        confusing, repetitive or frustrating than they need to be.
-      </p>
-      <p class="spaced">
-        I previously worked on digital products at Citymapper and Monzo. Now I
-        work directly with small businesses, creating useful AI automations and
-        carefully designed websites.
-      </p>
-      <p class="spaced">
-        I like listening closely, working out what the real problem is, and
-        making something that feels clear and manageable. Whether it's an
-        automation or a website, I want people to understand what I've built and
-        feel that it genuinely belongs to them.
-      </p>
-    </section>
-
-    <section aria-labelledby="contact">
+    <section aria-labelledby="contact" class="contact">
       <h2 id="contact">Get in touch</h2>
       <p>
         Tell me what's taking up your time and I'll tell you whether I can help.
@@ -65,7 +65,7 @@ import '../styles/page.css';
     margin-bottom: 2rem;
   }
 
-  .intro h1 {
+  h1 {
     font-size: clamp(1.9rem, 5.5vw, 2.6rem);
     text-wrap: balance;
   }
@@ -75,6 +75,14 @@ import '../styles/page.css';
     font-size: 1.1875rem;
     color: var(--muted);
     text-wrap: pretty;
+  }
+
+  .about-text section {
+    margin: 2rem 0 0;
+  }
+
+  .contact {
+    margin-top: 4rem;
   }
 
   /* The heading exists for structure; the page already says "About me". */
@@ -90,28 +98,19 @@ import '../styles/page.css';
     border: 0;
   }
 
-  /* Portrait is first in the DOM so it stacks above the text on a phone,
-     then moves to the right-hand column on wider screens. */
-  @media (min-width: 46rem) {
-    /* The header band is wider than the reading measure so a 280px portrait
-       leaves the heading a sensible column. Prose stays at --measure below,
-       and every left edge still lines up. */
+  /* Portrait is first in the DOM so it stacks above the text on a phone.
+     On desktop it moves to the right column and the whole of the copy runs
+     down the left, so nothing has to wait for the image to end. */
+  @media (min-width: 48rem) {
     main {
-      max-width: 46rem;
+      max-width: 52rem;
     }
 
-    section {
-      max-width: var(--measure);
-    }
-
-    .masthead {
+    .about-top {
       display: grid;
-      grid-template-columns: 1fr 280px;
+      grid-template-columns: minmax(0, 1fr) 280px;
       gap: 2.5rem;
       align-items: start;
-      /* The portrait sets the row height, so the default 5rem below it
-         leaves too much air before the prose. */
-      margin-bottom: 2.5rem;
     }
 
     .portrait {
@@ -121,9 +120,15 @@ import '../styles/page.css';
       margin-bottom: 0;
     }
 
-    .intro {
+    .about-text {
       grid-column: 1;
       grid-row: 1;
+    }
+
+    /* Keep the standalone sections at a reading width rather than letting
+       them run the full width of the widened page. */
+    .contact {
+      max-width: var(--measure);
     }
   }
 </style>
