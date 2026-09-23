@@ -1,0 +1,21 @@
+---
+import ClientLandingPage from '../components/client-landing/ClientLandingPage.astro';
+import { clientLandings } from '../data/clients';
+import type { ClientLanding } from '../data/client-landing-types';
+
+export function getStaticPaths() {
+  return clientLandings.map((page) => ({
+    params: { client: page.slug },
+    props: { page },
+  }));
+}
+
+interface Props {
+  page: ClientLanding;
+}
+
+const { page } = Astro.props;
+---
+
+<ClientLandingPage page={page} />
+

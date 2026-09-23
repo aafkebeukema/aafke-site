@@ -1,0 +1,29 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer>
+  <p>
+    <a href="mailto:hello@aafke.co.uk">hello@aafke.co.uk</a>
+  </p>
+  <p class="copyright">&copy; {year} Aafke Beukema</p>
+</footer>
+
+<style>
+  footer {
+    max-width: var(--measure);
+    margin: 5rem auto 0;
+    padding: 1.5rem 1.5rem 4rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.875rem;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    justify-content: space-between;
+  }
+
+  p {
+    margin: 0;
+  }
+</style>

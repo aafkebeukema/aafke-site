@@ -1,0 +1,68 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import type { ClientLanding } from '../../data/client-landing-types';
+import Timeline from './Timeline.astro';
+
+interface Props {
+  page: ClientLanding;
+}
+
+const { page } = Astro.props;
+---
+
+<Layout title={page.seoTitle} description={page.description} noindex={true} chrome={false}>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Newsreader:ital,opsz,wght@0,72,400;0,72,600;1,72,500&display=swap" rel="stylesheet" />
+  <main>
+    <header class="masthead">
+      <p class="eyebrow">{page.eyebrow}</p>
+      <h1>{page.headline}</h1>
+      <p class="tagline">{page.introduction}</p>
+    </header>
+
+    <div class="case-bleed">
+      <section class="case-panel" aria-label={`A day at ${page.clientName}`}>
+        <div class="case-inner"><Timeline steps={page.steps} /></div>
+      </section>
+    </div>
+
+    <section aria-labelledby="next" class="next-section">
+      <h2 id="next">{page.callToAction.heading}</h2>
+      <p>{page.callToAction.body}</p>
+      <p class="spaced"><a class="cta" href={`mailto:${page.callToAction.email}`}>{page.callToAction.email}</a></p>
+    </section>
+
+    <footer><p>&copy; {new Date().getFullYear()} Aafke Beukema &middot; <a href="/">aafke.co.uk</a></p></footer>
+  </main>
+
+  <script>
+    document.querySelectorAll<HTMLButtonElement>('[data-copy-message]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        await navigator.clipboard.writeText(button.dataset.copyMessage ?? '');
+        const original = button.textContent;
+        button.textContent = 'Copied!';
+        button.classList.add('copied');
+        window.setTimeout(() => {
+          button.textContent = original;
+          button.classList.remove('copied');
+        }, 1800);
+      });
+    });
+  </script>
+</Layout>
+
+<style>
+  main { max-width: var(--measure); margin: 0 auto; padding: 6rem 1.5rem 4rem; }
+  .masthead { margin-bottom: 3.5rem; }
+  .eyebrow { margin: 0 0 1.5rem; font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+  h1 { font-size: clamp(1.9rem, 5.5vw, 2.6rem); text-wrap: balance; }
+  .tagline { margin: 1.5rem 0 0; font-size: 1.1875rem; color: var(--muted); text-wrap: pretty; }
+  h2 { font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); padding-bottom: 0.75rem; border-bottom: 1px solid var(--rule); margin-bottom: 1.75rem; }
+  p { margin: 0; text-wrap: pretty; }
+  .spaced { margin-top: 1.25rem; }
+  .cta { font-size: 1.1875rem; font-weight: 500; border-bottom-width: 2px; border-bottom-color: var(--muted); }
+  .next-section { margin-bottom: 4rem; }
+  footer { margin-top: 5rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); font-size: 0.875rem; color: var(--muted); }
+  .case-bleed { width: 100vw; position: relative; left: 50%; margin-left: -50vw; margin-bottom: 3.5rem; }
+  .case-panel { background: oklch(0.97 0.004 95); }
+  .case-inner { max-width: 1080px; margin: 0 auto; padding: 48px 24px; font-family: 'Newsreader', Georgia, serif; color: #1a1a18; }
+</style>

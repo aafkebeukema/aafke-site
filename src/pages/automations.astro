@@ -1,0 +1,73 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SunnyDaysWalkthrough from '../components/walkthroughs/SunnyDaysWalkthrough.astro';
+import { serviceById } from '../data/services';
+import { tradesForService } from '../data/trades';
+import '../styles/page.css';
+
+const service = serviceById('automations');
+const trades = tradesForService('automations');
+---
+
+<Layout
+  title="AI automations | Aafke Beukema"
+  description={service.blurb}
+>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Newsreader:ital,opsz,wght@0,72,400;0,72,600;1,72,500&display=swap"
+    rel="stylesheet"
+  />
+  <main>
+    <header class="masthead">
+      <h1>{service.name}</h1>
+      <p class="price">{service.price}</p>
+      <p class="tagline">{service.blurb}</p>
+    </header>
+
+    <section aria-labelledby="trades">
+      <h2 id="trades">Who I've built for</h2>
+      <div class="trade-list">
+        {trades.map((trade) => (
+          <article>
+            <h3>{trade.name}</h3>
+            <p>{trade.blurb}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  </main>
+
+  <SunnyDaysWalkthrough />
+
+  <main>
+    <section aria-labelledby="contact">
+      <h2 id="contact">Get in touch</h2>
+      <p>
+        Tell me what's taking up your time and I'll tell you whether I can help.
+        No charge for that conversation.
+      </p>
+      <p class="spaced">
+        <a class="cta" href="mailto:hello@aafke.co.uk">hello@aafke.co.uk</a>
+      </p>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  .trade-list {
+    display: grid;
+    gap: 2.5rem;
+  }
+
+  .masthead .price {
+    margin: 0.75rem 0 0;
+    color: var(--muted);
+  }
+
+  @media (min-width: 34rem) {
+    .trade-list {
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+  }
+</style>

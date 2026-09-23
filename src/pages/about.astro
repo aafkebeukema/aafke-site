@@ -1,0 +1,44 @@
+---
+import Layout from '../layouts/Layout.astro';
+import '../styles/page.css';
+---
+
+<Layout
+  title="About | Aafke Beukema"
+  description="Eleven years in engineering, AI and product delivery at Monzo and Citymapper, now building small practical tools for small businesses."
+>
+  <main>
+    <header class="masthead">
+      <h1>About me</h1>
+      <p class="tagline">
+        {/* Placeholder: the fuller story goes here, so this page is not just a
+            longer copy of the homepage. Left deliberately thin pending your prose. */}
+        I spent eleven years in engineering, AI and product delivery at
+        Monzo and Citymapper, shipping software that real customers
+        depended on every day.
+      </p>
+    </header>
+
+    <section aria-labelledby="now">
+      <h2 id="now">What I do now</h2>
+      <p>
+        I now build the same quality of thing at a much smaller scale, for
+        people who'd otherwise be stuck doing it by hand.
+      </p>
+      <p class="spaced">
+        I'll tell you honestly if automation isn't the answer for your problem.
+      </p>
+    </section>
+
+    <section aria-labelledby="contact">
+      <h2 id="contact">Get in touch</h2>
+      <p>
+        Tell me what's taking up your time and I'll tell you whether I can help.
+        No charge for that conversation.
+      </p>
+      <p class="spaced">
+        <a class="cta" href="mailto:hello@aafke.co.uk">hello@aafke.co.uk</a>
+      </p>
+    </section>
+  </main>
+</Layout>

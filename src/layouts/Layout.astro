@@ -1,12 +1,20 @@
 ---
+import Nav from '../components/Nav.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+
 interface Props {
   title?: string;
   description?: string;
+  noindex?: boolean;
+  /** Bespoke prospect pages stay focused: no nav, no footer links. */
+  chrome?: boolean;
 }
 
 const {
   title = 'Aafke Beukema',
-  description = 'Placeholder description. Replace with a one-line summary of what you offer.',
+  description = 'I build custom AI automations and websites for small businesses.',
+  noindex = false,
+  chrome = true,
 } = Astro.props;
 
 const canonicalUrl = Astro.url;
@@ -20,6 +28,7 @@ const canonicalUrl = Astro.url;
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalUrl} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
@@ -34,7 +43,9 @@ const canonicalUrl = Astro.url;
     />
   </head>
   <body>
+    {chrome && <Nav />}
     <slot />
+    {chrome && <SiteFooter />}
   </body>
 </html>
 

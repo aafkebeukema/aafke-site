@@ -1,0 +1,57 @@
+---
+import type { ChatDemo } from '../../data/client-landing-types';
+
+interface Props {
+  demo: ChatDemo;
+}
+
+const { demo } = Astro.props;
+---
+
+<div class="chat">
+  <div class:list={['chat-head', { owner: demo.fromOwner }]}>
+    <div class:list={['chat-avatar', { owner: demo.fromOwner }]}></div>
+    <div>
+      <div class="chat-title">{demo.contact}</div>
+      <div class="chat-meta">{demo.meta}</div>
+    </div>
+  </div>
+  <div class="chat-body">
+    {demo.messages.map((message) => (
+      <div class:list={['bubble-wrap', { outgoing: message.direction === 'outgoing' }]}>
+        <div class:list={['bubble', { outgoing: message.direction === 'outgoing' }]}>{message.text}</div>
+        <div class:list={['stamp', { right: message.direction === 'outgoing' }]}>{message.time}</div>
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .chat { max-width: 420px; font-family: system-ui, sans-serif; }
+  .chat-head {
+    background: oklch(0.94 0.005 90); padding: 10px 14px; display: flex;
+    align-items: center; gap: 10px; border: 1px solid oklch(0.85 0.01 90);
+    border-radius: 2px 2px 0 0;
+  }
+  .chat-head.owner { background: oklch(0.93 0.02 258); }
+  .chat-avatar { width: 30px; height: 30px; border-radius: 50%; background: oklch(0.75 0.03 200); flex: none; }
+  .chat-avatar.owner { background: oklch(0.65 0.12 258); }
+  .chat-title { font-size: 13.5px; font-weight: 600; color: #333; }
+  .chat-meta { font-size: 11px; color: #777; }
+  .chat-body {
+    padding: 14px; display: flex; flex-direction: column; gap: 10px;
+    background: oklch(0.97 0.003 90); border: 1px solid oklch(0.85 0.01 90);
+    border-top: none; box-shadow: 0 2px 10px oklch(0 0 0 / 0.06);
+  }
+  .bubble-wrap { max-width: 85%; }
+  .bubble-wrap.outgoing { align-self: flex-end; }
+  .bubble {
+    background: #fff; border: 1px solid oklch(0.88 0.01 90);
+    border-radius: 10px 10px 10px 2px; padding: 9px 12px;
+    font-size: 13.5px; line-height: 1.4; color: #222;
+  }
+  .bubble.outgoing { background: oklch(0.9 0.05 150); border: none; border-radius: 10px 10px 2px 10px; color: #1a2e1a; }
+  .stamp { font-size: 10.5px; color: #999; margin: 2px 0 0 2px; }
+  .stamp.right { text-align: right; margin-right: 2px; }
+</style>
+

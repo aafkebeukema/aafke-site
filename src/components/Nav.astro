@@ -1,0 +1,75 @@
+---
+import { services } from '../data/services';
+
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const links = [
+  ...services.map((service) => ({ href: service.href, label: service.navLabel })),
+  { href: '/about', label: 'About' },
+];
+---
+
+<nav aria-label="Main">
+  <a class="wordmark" href="/" aria-current={path === '/' ? 'page' : undefined}>
+    Aafke Beukema
+  </a>
+  <ul>
+    {links.map((link) => (
+      <li>
+        <a
+          href={link.href}
+          aria-current={path === link.href ? 'page' : undefined}
+        >
+          {link.label}
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>
+
+<style>
+  nav {
+    max-width: var(--measure);
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.75rem 1.5rem;
+  }
+
+  .wordmark {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    border-bottom: none;
+    margin-right: auto;
+  }
+
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 0.9375rem;
+  }
+
+  a {
+    border-bottom: 1px solid transparent;
+    color: var(--muted);
+  }
+
+  .wordmark,
+  a[aria-current='page'] {
+    color: var(--ink);
+  }
+
+  a:hover {
+    border-bottom-color: var(--accent);
+    color: var(--ink);
+  }
+
+  a[aria-current='page'] {
+    border-bottom-color: var(--rule);
+  }
+</style>

@@ -1,0 +1,32 @@
+---
+import type { DraftDemo } from '../../data/client-landing-types';
+
+interface Props {
+  demo: DraftDemo;
+}
+
+const { demo } = Astro.props;
+---
+
+<div class="draft-card">
+  <div class="draft-label">{demo.label}</div>
+  <p>{demo.message}</p>
+  <button type="button" data-copy-message={demo.message}>{demo.buttonLabel ?? 'Copy message'}</button>
+</div>
+
+<style>
+  .draft-card {
+    background: #fff; border: 1px solid oklch(0.85 0.01 90); border-radius: 6px;
+    box-shadow: 0 4px 16px oklch(0 0 0 / 0.08); padding: 18px; max-width: 400px;
+    font-family: system-ui, sans-serif;
+  }
+  .draft-label { font-size: 10.5px; font-weight: 600; color: #889; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; }
+  p { font-size: 13.5px; line-height: 1.5; color: #222; margin: 0 0 14px; }
+  button {
+    background: oklch(0.95 0.003 90); color: #333; border: 1px solid #ddd;
+    border-radius: 5px; padding: 7px 14px; font-size: 12.5px; font-weight: 600;
+    cursor: pointer; font-family: system-ui, sans-serif;
+  }
+  button.copied { background: oklch(0.9 0.08 150); }
+</style>
+

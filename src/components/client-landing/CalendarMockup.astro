@@ -1,0 +1,67 @@
+---
+import type { CalendarDemo } from '../../data/client-landing-types';
+
+interface Props {
+  demo: CalendarDemo;
+}
+
+const { demo } = Astro.props;
+---
+
+<div class="calendar">
+  <header>
+    <div class="day">{demo.day}</div>
+    <div class="date">{demo.date}</div>
+  </header>
+  <div class="grid">
+    {demo.hours.map((hour, index) => (
+      <>
+        <div class="hour" style={`grid-row:${index * 2 + 1}`}>{hour}</div>
+        <div class="line" style={`grid-row:${index * 2 + 1}`}></div>
+      </>
+    ))}
+    <div class="now"></div>
+    {demo.events.map((event) => (
+      <div
+        class:list={['event', { new: event.isNew }]}
+        style={`grid-row:${event.startRow}/${event.endRow}`}
+      >
+        <div class="event-time">{event.time}</div>
+        <div class="event-title">{event.title}</div>
+        {event.detail && <div class="event-detail">{event.detail}</div>}
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .calendar {
+    background: #fff; border: 1px solid oklch(0.85 0.01 90); border-radius: 12px;
+    box-shadow: 0 2px 10px oklch(0 0 0 / 0.06); max-width: 340px; overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  header { padding: 12px 16px 10px; border-bottom: 1px solid oklch(0.92 0.005 90); }
+  .day { font-size: 10.5px; font-weight: 700; color: #ff3b30; text-transform: uppercase; letter-spacing: 0.03em; }
+  .date { font-size: 18px; font-weight: 700; color: #1a1a18; margin-top: 2px; }
+  .grid {
+    position: relative; display: grid; grid-template-columns: 30px 1fr;
+    grid-template-rows: repeat(18, 20px); column-gap: 8px; padding: 10px 14px 14px;
+  }
+  .hour { grid-column: 1; font-size: 10.5px; color: #9a9a9e; text-align: right; transform: translateY(-6px); }
+  .line { grid-column: 2; border-top: 1px solid oklch(0.93 0.004 90); align-self: start; }
+  .now { grid-column: 2; grid-row: 1; position: relative; border-top: 2px solid #ff3b30; align-self: start; }
+  .now::before { content: ''; position: absolute; left: -4px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: #ff3b30; }
+  .event {
+    grid-column: 2; position: relative; background: oklch(0.93 0.035 258);
+    border-radius: 5px; padding: 3px 8px 4px 10px; margin: 0 2px; overflow: hidden;
+  }
+  .event::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 3px; background: oklch(0.5 0.14 258); }
+  .event-time { font-size: 10px; font-weight: 600; color: oklch(0.35 0.1 258); }
+  .event-title { font-size: 11.5px; font-weight: 600; color: oklch(0.28 0.08 258); line-height: 1.25; }
+  .event-detail { font-size: 10px; color: oklch(0.4 0.08 45); margin-top: 1px; }
+  .event.new { background: oklch(0.88 0.09 55); }
+  .event.new::before { background: oklch(0.55 0.15 45); }
+  .event.new .event-time { color: oklch(0.35 0.12 45); }
+  .event.new .event-title { color: oklch(0.28 0.1 45); }
+</style>
+

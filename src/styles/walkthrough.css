@@ -1,0 +1,121 @@
+/* Case-study walkthroughs. Moved verbatim off the old tabbed homepage. */
+/* Break the case panels out of the article's narrow reading measure so
+   the timelines have room; each panel stays exactly as wide as the
+   viewport (capped at 1120px), so there's no width mismatch between
+   the container and the row layouts' own responsive breakpoint below. */
+.case-bleed {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  margin-left: -50vw;
+  margin-bottom: 4rem;
+}
+
+.case-panel {
+  background: oklch(0.97 0.004 95);
+}
+
+.case-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 56px 24px 72px;
+  color: #1a1a18;
+}
+
+#panel-automations .case-inner {
+  font-family: 'Newsreader', Georgia, serif;
+}
+
+#panel-websites .case-inner {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.case-inner h3 {
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: clamp(1.875rem, 4vw, 2.625rem);
+  line-height: 1.15;
+  margin: 0 0 18px;
+  font-weight: 600;
+}
+
+.sd-copy-btn {
+  background: oklch(0.95 0.003 90);
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: system-ui, sans-serif;
+}
+
+.sd-copy-btn.copied {
+  background: oklch(0.9 0.08 150);
+}
+
+/* Automations timeline */
+.sd-row {
+  display: grid;
+  grid-template-columns: 78px 18px minmax(0, 1fr) 240px;
+  gap: 26px;
+  padding: 40px 0;
+}
+.sd-lineCol { position: relative; display: flex; justify-content: center; }
+.sd-lineCol::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: -40px;
+  left: 50%;
+  width: 1px;
+  background: oklch(0.8 0.01 90);
+  transform: translateX(-50%);
+}
+.sd-row:last-of-type .sd-lineCol::before { bottom: 50%; }
+
+@media (max-width: 64rem) {
+  .sd-row { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .sd-row > :first-child { text-align: left !important; }
+  .sd-lineCol { display: none; }
+  .sd-note { margin-top: 6px; }
+}
+
+/* Websites timeline */
+.wd-row {
+  display: grid;
+  grid-template-columns: 64px 18px minmax(0, 1fr) 220px;
+  gap: 26px;
+  padding: 36px 0;
+  border-bottom: 1px solid #e4e2dd;
+}
+.wd-row:last-of-type { border-bottom: none; }
+.wd-lineCol { position: relative; display: flex; justify-content: center; }
+.wd-lineCol::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: -36px;
+  left: 50%;
+  width: 1px;
+  background: #dedad2;
+  transform: translateX(-50%);
+}
+.wd-row:last-of-type .wd-lineCol::before { bottom: 50%; }
+
+@media (max-width: 64rem) {
+  .wd-row { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .wd-row > :first-child { text-align: left !important; }
+  .wd-lineCol { display: none; }
+  .wd-note { margin-top: 6px; }
+}
+
+@media (max-width: 34rem) {
+  .case-inner { padding: 44px 20px 56px; }
+  .case-inner > header { margin-bottom: 36px !important; }
+  .sd-row, .wd-row { padding: 28px 0 !important; }
+  .sd-row > :nth-child(3), .wd-row > :nth-child(3) { min-width: 0; }
+  .wd-collage { transform: scale(0.76); transform-origin: top left; width: 132%; margin-bottom: -48px; }
+  .wd-preference-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; max-width: none !important; }
+  .wd-keys { grid-template-columns: 1fr !important; }
+}
