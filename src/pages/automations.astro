@@ -1,15 +1,12 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import SunnyDaysWalkthrough from '../components/walkthroughs/SunnyDaysWalkthrough.astro';
-import ProjectLabel from '../components/ProjectLabel.astro';
 import { serviceById } from '../data/services';
 import { tradesForService } from '../data/trades';
-import { projectById } from '../data/projects';
+import { projectForTrade, isIndexable } from '../data/projects';
 import '../styles/page.css';
 
 const service = serviceById('automations');
 const trades = tradesForService('automations');
-const featured = projectById('sunny-days')!;
 ---
 
 <Layout
@@ -30,23 +27,24 @@ const featured = projectById('sunny-days')!;
     <section aria-labelledby="trades">
       <h2 id="trades">Work and examples</h2>
       <div class="trade-list">
-        {trades.map((trade) => (
-          <article>
-            <h3>{trade.name}</h3>
-            <p>{trade.blurb}</p>
-          </article>
-        ))}
+        {trades.map((trade) => {
+          const project = projectForTrade(trade.id);
+          const linked = project?.path && isIndexable(project) ? project : undefined;
+          return (
+            <article>
+              <h3>{trade.name}</h3>
+              <p>{trade.blurb}</p>
+              {linked && (
+                <p class="see-example">
+                  <a href={linked.path}>See the {linked.name} example</a>
+                </p>
+              )}
+            </article>
+          );
+        })}
       </div>
     </section>
-  </main>
 
-  <div class="label-rail">
-    <ProjectLabel project={featured} />
-  </div>
-
-  <SunnyDaysWalkthrough />
-
-  <main>
     <section aria-labelledby="contact">
       <h2 id="contact">Get in touch</h2>
       <p>
@@ -61,10 +59,9 @@ const featured = projectById('sunny-days')!;
 </Layout>
 
 <style>
-  .label-rail {
-    max-width: var(--measure);
-    margin: 0 auto;
-    padding: 0 1.5rem;
+  .see-example {
+    margin-top: 0.75rem;
+    font-size: 0.9375rem;
   }
 
   .trade-list {

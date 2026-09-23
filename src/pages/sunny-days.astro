@@ -1,0 +1,59 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SunnyDaysWalkthrough from '../components/walkthroughs/SunnyDaysWalkthrough.astro';
+import ProjectLabel from '../components/ProjectLabel.astro';
+import { projectById, isIndexable } from '../data/projects';
+import { serviceById } from '../data/services';
+import '../styles/page.css';
+
+const project = projectById('sunny-days')!;
+const service = serviceById(project.service);
+---
+
+<Layout
+  title="Sunny Days Childminding | AI automations | Aafke Beukema"
+  description="An illustrative example of automating a childminder's bookings, register and invoices."
+  noindex={!isIndexable(project)}
+>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Newsreader:ital,opsz,wght@0,72,400;0,72,600;1,72,500&display=swap"
+    rel="stylesheet"
+  />
+  <main>
+    <header class="masthead">
+      <p class="eyebrow"><a href={service.href}>{service.navLabel}</a></p>
+      <h1>{project.name}</h1>
+    </header>
+  </main>
+
+  <div class="label-rail">
+    <ProjectLabel project={project} />
+  </div>
+
+  <SunnyDaysWalkthrough />
+
+  <main>
+    <section aria-labelledby="contact">
+      <h2 id="contact">Get in touch</h2>
+      <p>
+        Tell me what's taking up your time and I'll tell you whether I can help.
+        No charge for that conversation.
+      </p>
+      <p class="spaced">
+        <a class="cta" href="mailto:hello@aafke.co.uk">hello@aafke.co.uk</a>
+      </p>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  .label-rail {
+    max-width: var(--measure);
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  .masthead {
+    margin-bottom: 2.5rem;
+  }
+</style>

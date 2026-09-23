@@ -1,5 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import { isIndexable } from '../../data/projects';
 import type { Project } from '../../data/projects';
 import Timeline from './Timeline.astro';
 
@@ -11,7 +12,7 @@ const { project } = Astro.props;
 const page = project.landing!;
 ---
 
-<Layout title={page.seoTitle} description={page.description} noindex={true} chrome={false}>
+<Layout title={page.seoTitle} description={page.description} noindex={!isIndexable(project)} chrome={false}>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Newsreader:ital,opsz,wght@0,72,400;0,72,600;1,72,500&display=swap" rel="stylesheet" />
   <main>
     <header class="masthead">

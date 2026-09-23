@@ -7,6 +7,8 @@ export const kerbsideCycles: Project = {
   trade: 'mobile-bike-repair',
   kind: 'example',
   status: 'published',
+  visibility: 'public',
+  path: '/kerbside-cycles',
   landing: {
     slug: 'kerbside-cycles',
     seoTitle: "A quick example for Kerbside Cycles | Aafke Beukema",

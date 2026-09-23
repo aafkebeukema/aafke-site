@@ -7,5 +7,7 @@ export const sunnyDays: Project = {
   trade: 'childminding',
   kind: 'example',
   status: 'published',
+  visibility: 'public',
+  path: '/sunny-days',
   // The walkthrough itself stays in SunnyDaysWalkthrough.astro.
 };

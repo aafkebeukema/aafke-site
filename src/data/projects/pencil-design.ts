@@ -7,6 +7,7 @@ export const pencilDesign: Project = {
   trade: 'joinery',
   kind: 'real',
   status: 'published',
+  visibility: 'public',
   evidenceUrl: 'https://www.pencil-design.co.uk',
   // The walkthrough itself stays in PencilDesignWalkthrough.astro.
 };
