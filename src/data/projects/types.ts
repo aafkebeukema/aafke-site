@@ -21,6 +21,8 @@ export type ProjectVisibility = 'public' | 'private';
 export interface Project {
   id: string;
   name: string;
+  /** Shorter label for menus, where the trade name is already shown. */
+  shortName?: string;
   service: ServiceId;
   trade: TradeId;
   kind: ProjectKind;

@@ -66,6 +66,6 @@ export const menuForService = (service: ServiceId, overviewHref: string): MenuEn
   ...tradesForService(service).flatMap((trade) => {
     const project = projectForTrade(trade.id);
     if (!project?.path || !isIndexable(project)) return [];
-    return [{ href: project.path, label: `${trade.name}: ${project.name}` }];
+    return [{ href: project.path, label: `${trade.name}: ${project.shortName ?? project.name}` }];
   }),
 ];

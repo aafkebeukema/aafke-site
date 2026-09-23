@@ -3,6 +3,7 @@ import type { Project } from './types';
 export const sunnyDays: Project = {
   id: 'sunny-days',
   name: 'Sunny Days Childminding',
+  shortName: 'Sunny Days',
   service: 'automations',
   trade: 'childminding',
   kind: 'example',
