@@ -12,7 +12,7 @@ const { project } = Astro.props;
 const page = project.landing!;
 ---
 
-<Layout title={page.seoTitle} description={page.description} noindex={!isIndexable(project)} chrome={false}>
+<Layout title={page.seoTitle} description={page.description} noindex={!isIndexable(project)} chrome={isIndexable(project)}>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Newsreader:ital,opsz,wght@0,72,400;0,72,600;1,72,500&display=swap" rel="stylesheet" />
   <main>
     <header class="masthead">
@@ -33,7 +33,9 @@ const page = project.landing!;
       <p class="spaced"><a class="cta" href={`mailto:${page.callToAction.email}`}>{page.callToAction.email}</a></p>
     </section>
 
-    <footer><p>&copy; {new Date().getFullYear()} Aafke Beukema &middot; <a href="/">aafke.co.uk</a></p></footer>
+    {!isIndexable(project) && (
+      <footer><p>&copy; {new Date().getFullYear()} Aafke Beukema &middot; <a href="/">aafke.co.uk</a></p></footer>
+    )}
   </main>
 
   <script>
