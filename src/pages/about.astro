@@ -9,6 +9,13 @@ import '../styles/page.css';
 >
   <main>
     <header class="masthead">
+      <img
+        class="portrait"
+        src="/images/aafke-portrait.webp"
+        alt="Aafke Beukema"
+        width="835"
+        height="870"
+      />
       <h1>About me</h1>
       <p class="tagline">
         {/* Placeholder: the fuller story goes here, so this page is not just a
@@ -42,3 +49,37 @@ import '../styles/page.css';
     </section>
   </main>
 </Layout>
+
+<style>
+  .portrait {
+    display: block;
+    width: 200px;
+    max-width: 55%;
+    height: auto;
+    border-radius: 6px;
+    margin-bottom: 2rem;
+  }
+
+  @media (min-width: 34rem) {
+    .masthead {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .portrait {
+      max-width: none;
+      margin-bottom: 0;
+    }
+
+    .masthead :global(h1),
+    .masthead :global(.tagline) {
+      grid-column: 2;
+    }
+
+    .portrait {
+      grid-row: 1 / span 2;
+    }
+  }
+</style>
