@@ -4,16 +4,12 @@ import SunnyDaysWalkthrough from '../components/walkthroughs/SunnyDaysWalkthroug
 import ProjectLabel from '../components/ProjectLabel.astro';
 import { serviceById } from '../data/services';
 import { tradesForService } from '../data/trades';
-import { projectById, serviceHasRealWork } from '../data/projects';
+import { projectById } from '../data/projects';
 import '../styles/page.css';
 
 const service = serviceById('automations');
 const trades = tradesForService('automations');
 const featured = projectById('sunny-days')!;
-// Never claim real customers above invented work.
-const tradesHeading = serviceHasRealWork('automations')
-  ? "Who I've built for"
-  : 'The kinds of business this is built for';
 ---
 
 <Layout
@@ -32,7 +28,7 @@ const tradesHeading = serviceHasRealWork('automations')
     </header>
 
     <section aria-labelledby="trades">
-      <h2 id="trades">{tradesHeading}</h2>
+      <h2 id="trades">Work and examples</h2>
       <div class="trade-list">
         {trades.map((trade) => (
           <article>

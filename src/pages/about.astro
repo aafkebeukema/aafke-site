@@ -5,35 +5,40 @@ import '../styles/page.css';
 
 <Layout
   title="About | Aafke Beukema"
-  description="Eleven years in engineering, AI and product delivery at Monzo and Citymapper, now building small practical tools for small businesses."
+  description="I'm Aafke. I previously worked on digital products at Citymapper and Monzo, and now work directly with small businesses on AI automations and websites."
 >
   <main>
     <header class="masthead">
       <img
         class="portrait"
         src="/images/aafke-portrait.webp"
-        alt="Aafke Beukema"
+        alt="Portrait of Aafke Beukema."
         width="835"
         height="870"
       />
-      <h1>About me</h1>
-      <p class="tagline">
-        {/* Placeholder: the fuller story goes here, so this page is not just a
-            longer copy of the homepage. Left deliberately thin pending your prose. */}
-        I spent eleven years in engineering, AI and product delivery at
-        Monzo and Citymapper, shipping software that real customers
-        depended on every day.
-      </p>
+      <div class="intro">
+        <h1>About me</h1>
+        <p class="tagline">Hi, I'm Aafke.</p>
+      </div>
     </header>
 
-    <section aria-labelledby="now">
-      <h2 id="now">What I do now</h2>
+    <section aria-labelledby="story">
+      <h2 id="story" class="visually-hidden">My background</h2>
       <p>
-        I now build the same quality of thing at a much smaller scale, for
-        people who'd otherwise be stuck doing it by hand.
+        I'm Dutch, and I've lived in London for most of my adult life. I've
+        always been drawn to practical problems: everyday things that are more
+        confusing, repetitive or frustrating than they need to be.
       </p>
       <p class="spaced">
-        I'll tell you honestly if automation isn't the answer for your problem.
+        I previously worked on digital products at Citymapper and Monzo. Now I
+        work directly with small businesses, creating useful AI automations and
+        carefully designed websites.
+      </p>
+      <p class="spaced">
+        I like listening closely, working out what the real problem is, and
+        making something that feels clear and manageable. Whether it's an
+        automation or a website, I want people to understand what I've built and
+        feel that it genuinely belongs to them.
       </p>
     </section>
 
@@ -53,33 +58,72 @@ import '../styles/page.css';
 <style>
   .portrait {
     display: block;
-    width: 200px;
-    max-width: 55%;
+    width: 280px;
+    max-width: 70%;
     height: auto;
     border-radius: 6px;
     margin-bottom: 2rem;
   }
 
-  @media (min-width: 34rem) {
+  .intro h1 {
+    font-size: clamp(1.9rem, 5.5vw, 2.6rem);
+    text-wrap: balance;
+  }
+
+  .tagline {
+    margin: 1.5rem 0 0;
+    font-size: 1.1875rem;
+    color: var(--muted);
+    text-wrap: pretty;
+  }
+
+  /* The heading exists for structure; the page already says "About me". */
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Portrait is first in the DOM so it stacks above the text on a phone,
+     then moves to the right-hand column on wider screens. */
+  @media (min-width: 46rem) {
+    /* The header band is wider than the reading measure so a 280px portrait
+       leaves the heading a sensible column. Prose stays at --measure below,
+       and every left edge still lines up. */
+    main {
+      max-width: 46rem;
+    }
+
+    section {
+      max-width: var(--measure);
+    }
+
     .masthead {
       display: grid;
-      grid-template-columns: 200px 1fr;
-      gap: 2rem;
+      grid-template-columns: 1fr 280px;
+      gap: 2.5rem;
       align-items: start;
+      /* The portrait sets the row height, so the default 5rem below it
+         leaves too much air before the prose. */
+      margin-bottom: 2.5rem;
     }
 
     .portrait {
+      grid-column: 2;
+      grid-row: 1;
       max-width: none;
       margin-bottom: 0;
     }
 
-    .masthead :global(h1),
-    .masthead :global(.tagline) {
-      grid-column: 2;
-    }
-
-    .portrait {
-      grid-row: 1 / span 2;
+    .intro {
+      grid-column: 1;
+      grid-row: 1;
     }
   }
 </style>

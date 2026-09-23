@@ -28,10 +28,3 @@ export const projectById = (id: string): Project | undefined =>
 /** Projects with a bespoke page that is ready to build. */
 export const buildableLandings = (): Project[] =>
   published().filter((project) => project.landing !== undefined);
-
-/**
- * True when everything shown for a service is invented, so a heading must
- * not claim real customers.
- */
-export const serviceHasRealWork = (service: ServiceId): boolean =>
-  projectsForService(service).some((project) => project.kind === 'real');
