@@ -1,0 +1,72 @@
+---
+import { EXAMPLE_DISCLAIMER } from '../data/projects';
+import type { Project } from '../data/projects';
+
+interface Props {
+  project: Project;
+}
+
+const { project } = Astro.props;
+const isExample = project.kind === 'example';
+---
+
+<p class:list={['label', isExample ? 'is-example' : 'is-real']}>
+  <span class="badge">{isExample ? 'Illustrative example' : 'Real project'}</span>
+  {isExample ? (
+    <span>{EXAMPLE_DISCLAIMER}</span>
+  ) : (
+    <span>
+      Built for {project.name}, live at{' '}
+      <a href={project.evidenceUrl}>{project.evidenceUrl?.replace('https://', '')}</a>.
+    </span>
+  )}
+</p>
+
+<style>
+  .label {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 0.75rem;
+    margin: 0 0 1.5rem;
+    font-size: 0.9375rem;
+    color: var(--muted);
+  }
+
+  .badge {
+    flex: none;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.1875rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid var(--rule);
+  }
+
+  .is-example .badge {
+    background: oklch(0.94 0.045 85);
+    border-color: oklch(0.86 0.06 85);
+    color: oklch(0.38 0.07 70);
+  }
+
+  .is-real .badge {
+    background: oklch(0.93 0.05 150);
+    border-color: oklch(0.84 0.07 150);
+    color: oklch(0.36 0.07 150);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .is-example .badge {
+      background: oklch(0.32 0.05 85);
+      border-color: oklch(0.42 0.06 85);
+      color: oklch(0.88 0.06 85);
+    }
+
+    .is-real .badge {
+      background: oklch(0.3 0.05 150);
+      border-color: oklch(0.4 0.06 150);
+      color: oklch(0.86 0.06 150);
+    }
+  }
+</style>

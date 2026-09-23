@@ -1,12 +1,19 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import PencilDesignWalkthrough from '../components/walkthroughs/PencilDesignWalkthrough.astro';
+import ProjectLabel from '../components/ProjectLabel.astro';
 import { serviceById } from '../data/services';
 import { tradesForService } from '../data/trades';
+import { projectById, serviceHasRealWork } from '../data/projects';
 import '../styles/page.css';
 
 const service = serviceById('websites');
 const trades = tradesForService('websites');
+const featured = projectById('pencil-design')!;
+// Never claim real customers above invented work.
+const tradesHeading = serviceHasRealWork('websites')
+  ? "Who I've built for"
+  : 'The kinds of business this is built for';
 ---
 
 <Layout
@@ -25,7 +32,7 @@ const trades = tradesForService('websites');
     </header>
 
     <section aria-labelledby="trades">
-      <h2 id="trades">Who I've built for</h2>
+      <h2 id="trades">{tradesHeading}</h2>
       <div class="trade-list">
         {trades.map((trade) => (
           <article>
@@ -36,6 +43,10 @@ const trades = tradesForService('websites');
       </div>
     </section>
   </main>
+
+  <div class="label-rail">
+    <ProjectLabel project={featured} />
+  </div>
 
   <PencilDesignWalkthrough />
 
@@ -54,6 +65,12 @@ const trades = tradesForService('websites');
 </Layout>
 
 <style>
+  .label-rail {
+    max-width: var(--measure);
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
   .trade-list {
     display: grid;
     gap: 2.5rem;

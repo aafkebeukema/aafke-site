@@ -1,6 +1,3 @@
-import type { ServiceId } from './services';
-import type { TradeId } from './trades';
-
 export interface ChatMessage {
   text: string;
   time: string;
@@ -47,13 +44,12 @@ export interface TimelineStep {
   demo: TimelineDemo;
 }
 
-export interface ClientLanding {
+/**
+ * The bespoke one-off page some projects have. Only page content lives here:
+ * what the project *is* (service, trade, kind, status) belongs on Project.
+ */
+export interface ProjectLanding {
   slug: string;
-  /** Which of the two things I sell this page is pitching. */
-  service: ServiceId;
-  /** The kind of business the client runs. */
-  trade: TradeId;
-  clientName: string;
   seoTitle: string;
   description: string;
   eyebrow: string;

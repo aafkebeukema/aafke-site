@@ -2,18 +2,18 @@
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 
-import { clientLandings } from './src/data/clients';
+import { buildableLandings } from './src/data/projects';
 
-// Bespoke prospect pages are noindex and shouldn't be advertised in the
-// sitemap either. Derived from the client list so adding one can't leak.
-const prospectPaths = clientLandings.map((client) => `/${client.slug}`);
+// Bespoke project pages are noindex, so they stay out of the sitemap too.
+// Draft projects are not built at all and so cannot appear here.
+const landingPaths = buildableLandings().map((project) => `/${project.landing.slug}`);
 
 // https://astro.build/config
 export default defineConfig({
   site: 'https://aafke.co.uk',
   integrations: [
     sitemap({
-      filter: (page) => !prospectPaths.some((path) => page.includes(path)),
+      filter: (page) => !landingPaths.some((path) => page.includes(path)),
     }),
   ],
 });

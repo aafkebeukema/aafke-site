@@ -1,13 +1,14 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import type { ClientLanding } from '../../data/client-landing-types';
+import type { Project } from '../../data/projects';
 import Timeline from './Timeline.astro';
 
 interface Props {
-  page: ClientLanding;
+  project: Project;
 }
 
-const { page } = Astro.props;
+const { project } = Astro.props;
+const page = project.landing!;
 ---
 
 <Layout title={page.seoTitle} description={page.description} noindex={true} chrome={false}>
@@ -20,7 +21,7 @@ const { page } = Astro.props;
     </header>
 
     <div class="case-bleed">
-      <section class="case-panel" aria-label={`A day at ${page.clientName}`}>
+      <section class="case-panel" aria-label={`A day at ${project.name}`}>
         <div class="case-inner"><Timeline steps={page.steps} /></div>
       </section>
     </div>

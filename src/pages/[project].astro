@@ -1,0 +1,21 @@
+---
+import ClientLandingPage from '../components/client-landing/ClientLandingPage.astro';
+import { buildableLandings } from '../data/projects';
+import type { Project } from '../data/projects';
+
+export function getStaticPaths() {
+  // Draft projects are not built at all, so their pages do not exist.
+  return buildableLandings().map((project) => ({
+    params: { project: project.landing!.slug },
+    props: { project },
+  }));
+}
+
+interface Props {
+  project: Project;
+}
+
+const { project } = Astro.props;
+---
+
+<ClientLandingPage project={project} />
