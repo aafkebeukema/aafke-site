@@ -129,7 +129,14 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 </Layout>
 
 <script>
-  import { MEETING_MINUTES, type Availability } from '../data/talk-availability';
+  import type { Availability } from '../data/talk-availability';
+
+  /** A slot from the API, with its times parsed. */
+  interface Slot {
+    id: string;
+    start: Date;
+    end: Date;
+  }
 
   const root = document.querySelector<HTMLElement>('main.talk')!;
   const $ = <T extends HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
@@ -180,7 +187,7 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   // Filled from /api/availability once it loads. Until then the calendar
   // shows with no circles and the times column stays empty.
-  const slotsByDay = new Map<string, Date[]>();
+  const slotsByDay = new Map<string, Slot[]>();
   let loaded = false;
 
   async function loadAvailability() {
@@ -189,12 +196,12 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const availability: Availability = await response.json();
 
     availability.slots
-      .map((slot) => new Date(slot.start))
-      .filter((start) => start > now)
-      .sort((a, b) => a.getTime() - b.getTime())
-      .forEach((start) => {
-        const key = dayKey(start);
-        slotsByDay.set(key, [...(slotsByDay.get(key) ?? []), start]);
+      .map((slot) => ({ id: slot.id, start: new Date(slot.start), end: new Date(slot.end) }))
+      .filter((slot) => slot.start > now)
+      .sort((a, b) => a.start.getTime() - b.start.getTime())
+      .forEach((slot) => {
+        const key = dayKey(slot.start);
+        slotsByDay.set(key, [...(slotsByDay.get(key) ?? []), slot]);
       });
   }
 
@@ -202,7 +209,7 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   let viewYear = firstYear;
   let viewMonth = firstMonth - 1;
   let selectedDay: string | null = null;
-  let selectedSlot: Date | null = null;
+  let selectedSlot: Slot | null = null;
 
   const els = {
     monthName: $('[data-month-name]'),
@@ -274,17 +281,17 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const slots = (selectedDay && slotsByDay.get(selectedDay)) || [];
     els.times.hidden = false;
     els.timesDate.textContent = slots.length
-      ? zoneLongDate.format(slots[0])
+      ? zoneLongDate.format(slots[0].start)
       : 'No times this month';
     els.noTimes.hidden = slots.length > 0;
     els.timeList.replaceChildren(
-      ...slots.map((start) => {
+      ...slots.map((slot) => {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'time';
-        button.textContent = clockTime(start);
-        button.setAttribute('aria-pressed', String(start === selectedSlot));
-        button.addEventListener('click', () => selectSlot(start, button));
+        button.textContent = clockTime(slot.start);
+        button.setAttribute('aria-pressed', String(slot === selectedSlot));
+        button.addEventListener('click', () => selectSlot(slot, button));
         return button;
       }),
     );
@@ -303,8 +310,8 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     }
   }
 
-  function selectSlot(start: Date, chosen: HTMLElement) {
-    selectedSlot = start;
+  function selectSlot(slot: Slot, chosen: HTMLElement) {
+    selectedSlot = slot;
     els.timeList.querySelectorAll('.time').forEach((button) => {
       button.setAttribute('aria-pressed', String(button === chosen));
     });
@@ -319,8 +326,8 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     selectDay(firstDayInView(), { scroll: false });
   }
 
-  function fillSummaries(start: Date) {
-    const end = new Date(start.getTime() + MEETING_MINUTES * 60_000);
+  /** Uses the slot's own end time from the calendar, not a calculated one. */
+  function fillSummaries({ start, end }: Slot) {
     const fill = (selector: string, text: string) =>
       root.querySelectorAll(selector).forEach((el) => (el.textContent = text));
     fill('[data-summary-date]', zoneLongDate.format(start));
