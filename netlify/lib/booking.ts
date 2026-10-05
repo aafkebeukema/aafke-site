@@ -33,11 +33,14 @@ export class SlotUnavailableError extends Error {
   name = 'SlotUnavailableError';
 }
 
-/** What the page needs once a booking has gone through. */
+/**
+ * What the page needs once a booking has gone through. meetUrl is missing
+ * only when Google was slow to create the Meet; the invitation carries it.
+ */
 export interface BookingResult {
   start: string;
   end: string;
-  meetUrl: string;
+  meetUrl?: string;
 }
 
 // ---------------------------------------------------------------- validation
@@ -62,8 +65,9 @@ const text = (value: unknown) => (typeof value === 'string' ? value.trim() : '')
 export function validateBooking(body: unknown): Validation {
   const input = (body && typeof body === 'object' ? body : {}) as Record<string, unknown>;
 
-  // A person never sees this field, so anything in it means a bot.
-  if (text(input.website)) return { ok: false, reason: 'honeypot' };
+  // A person never sees this field, so anything in it means a bot. The name
+  // is one that browsers and password managers have no reason to fill.
+  if (text(input.company_fax)) return { ok: false, reason: 'honeypot' };
 
   const slotId = text(input.slotId);
   const name = text(input.name);
@@ -185,22 +189,33 @@ export async function bookSlot(
     throw new GoogleCalendarError(`Event update failed: ${patched.status} ${await patched.text()}`);
   }
 
+  // From here the event is booked and Google has sent the invitation, so
+  // nothing below may turn this into a failure or undo it.
+
   // 3. Google usually returns the Meet straight away, but may still be
-  // creating it. Check back briefly rather than confirm without one.
-  let booked = (await patched.json()) as MeetEvent;
-  for (let check = 0; !meetUrl(booked) && check < MEET_CHECKS; check++) {
-    if (booked.conferenceData?.createRequest?.status?.statusCode === 'failure') break;
-    await wait(MEET_WAIT_MS);
-    const again = await fetchImpl(`${eventUrl}?${new URLSearchParams({ fields })}`, { headers: auth });
-    if (!again.ok) break;
-    booked = (await again.json()) as MeetEvent;
+  // creating it. Check back briefly; if it's still not there, the booking
+  // stands without the link and the invitation carries it.
+  let booked: MeetEvent = event;
+  try {
+    booked = (await patched.json()) as MeetEvent;
+    for (let check = 0; !meetUrl(booked) && check < MEET_CHECKS; check++) {
+      if (booked.conferenceData?.createRequest?.status?.statusCode === 'failure') break;
+      await wait(MEET_WAIT_MS);
+      const again = await fetchImpl(`${eventUrl}?${new URLSearchParams({ fields })}`, { headers: auth });
+      if (!again.ok) break;
+      booked = (await again.json()) as MeetEvent;
+    }
+  } catch (error) {
+    console.warn('POST /api/book: booked, but could not read the Meet link:', error);
   }
+
   const url = meetUrl(booked);
-  if (!url) throw new GoogleCalendarError('The event was updated but Google Meet was not created');
+  if (!url) console.warn(`POST /api/book: booked event ${booking.slotId} has no Meet link yet`);
 
   return {
     start: new Date(booked.start?.dateTime ?? event.start!.dateTime!).toISOString(),
     end: new Date(booked.end?.dateTime ?? event.end!.dateTime!).toISOString(),
-    meetUrl: url,
+    ...(url && { meetUrl: url }),
   };
 }
+

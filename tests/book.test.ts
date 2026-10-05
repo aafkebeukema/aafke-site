@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { afterEach, test } from 'node:test';
 
 import book, { config } from '../netlify/functions/book.ts';
@@ -34,7 +35,7 @@ const form = {
   email: 'sam@example.com',
   phone: '07700 900123',
   note: 'Testing in small teams',
-  website: '',
+  company_fax: '',
 };
 
 interface Call {
@@ -87,7 +88,7 @@ test('accepts a complete form and trims it', () => {
 });
 
 test('rejects missing or invalid fields with per-field messages', () => {
-  assert.deepEqual(validateBooking({ website: '' }), {
+  assert.deepEqual(validateBooking({ company_fax: '' }), {
     ok: false,
     reason: 'invalid',
     fields: {
@@ -112,11 +113,22 @@ test('rejects missing or invalid fields with per-field messages', () => {
   assert.ok(!longNote.ok && longNote.reason === 'invalid' && longNote.fields.note);
 });
 
-test('treats a filled honeypot as a bot', () => {
-  assert.deepEqual(validateBooking({ ...form, website: 'https://spam.example' }), {
+test('treats a filled company_fax honeypot as a bot', () => {
+  assert.deepEqual(validateBooking({ ...form, company_fax: '020 7946 0000' }), {
     ok: false,
     reason: 'honeypot',
   });
+});
+
+test('no longer treats website as the honeypot, so an autofilled one is harmless', () => {
+  assert.equal(validateBooking({ ...form, website: 'https://autofilled.example' }).ok, true);
+});
+
+test('the page sends company_fax and has no website field', async () => {
+  const page = await readFile(new URL('../src/pages/talktome.astro', import.meta.url), 'utf8');
+  assert.match(page, /name="company_fax"/);
+  assert.match(page, /company_fax: value\('company_fax'\)/);
+  assert.doesNotMatch(page, /name="website"|value\('website'\)/);
 });
 
 // ------------------------------------------------------------------ booking
@@ -204,12 +216,42 @@ test('waits for a Meet that Google is still creating', async () => {
   assert.equal(result.meetUrl, MEET);
 });
 
-test('fails rather than confirming when no Meet is created', async () => {
+test('still succeeds, without meetUrl, when the Meet is not ready after the retries', async () => {
   const fake = fakeGoogle({ patch: (body) => Response.json({ ...bookableEvent(), ...body }) });
-  await assert.rejects(
-    bookSlot(google, checked(), { fetch: fake.fetch, wait: async () => {} }),
-    GoogleCalendarError,
-  );
+  const waits: number[] = [];
+  const warn = console.warn;
+  console.warn = () => {};
+  try {
+    const result = await bookSlot(google, checked(), {
+      fetch: fake.fetch,
+      wait: async (ms) => void waits.push(ms),
+    });
+    assert.deepEqual(result, { start: bookableEvent().start.dateTime, end: bookableEvent().end.dateTime });
+    assert.equal(waits.length, 3, 'tried briefly before giving up on the link');
+    assert.equal(fake.calls.filter((call) => call.method === 'PATCH').length, 1, 'no second update, no rollback');
+    assert.ok(!fake.calls.some((call) => call.method === 'DELETE'));
+  } finally {
+    console.warn = warn;
+  }
+});
+
+test('still succeeds when re-reading the event for the Meet fails', async () => {
+  let reads = 0;
+  const fake = fakeGoogle({ patch: (body) => Response.json({ ...bookableEvent(), ...body }) });
+  const flaky = (async (input: string | URL | Request, init?: RequestInit) => {
+    if ((init?.method ?? 'GET') === 'GET' && String(input).includes('/events/') && ++reads > 1) {
+      throw new TypeError('fetch failed');
+    }
+    return fake.fetch(input, init);
+  }) as typeof fetch;
+  const warn = console.warn;
+  console.warn = () => {};
+  try {
+    const result = await bookSlot(google, checked(), { fetch: flaky, wait: async () => {} });
+    assert.ok(!('meetUrl' in result));
+  } finally {
+    console.warn = warn;
+  }
 });
 
 for (const [label, event] of [
@@ -236,11 +278,13 @@ test('treats a changed event (412 from If-Match) as taken', async () => {
 const realFetch = globalThis.fetch;
 const realEnv = { ...process.env };
 const realError = console.error;
+const realWarn = console.warn;
 const logged: unknown[][] = [];
 afterEach(() => {
   globalThis.fetch = realFetch;
   process.env = { ...realEnv };
   console.error = realError;
+  console.warn = realWarn;
   logged.length = 0;
 });
 
@@ -267,6 +311,14 @@ test('books and returns only start, end and the Meet link', async () => {
   assert.deepEqual(Object.keys(await response.json()), ['start', 'end', 'meetUrl']);
 });
 
+test('answers 200 without meetUrl when the event was booked but the Meet is slow', async () => {
+  useGoogle({ patch: (body) => Response.json({ ...bookableEvent(), ...body }) });
+  console.warn = () => {};
+  const response = await post(form);
+  assert.equal(response.status, 200);
+  assert.deepEqual(Object.keys(await response.json()), ['start', 'end']);
+});
+
 test('answers 409 when the slot has been retitled', async () => {
   const fake = useGoogle({ event: bookableEvent({ summary: 'Alex : Aafke - Chat' }) });
   const response = await post(form);
@@ -290,9 +342,9 @@ test('answers 400 with field messages for missing data, without calling Google',
   assert.equal(fake.calls.length, 0);
 });
 
-test('answers 400 to a filled honeypot, without calling Google', async () => {
+test('answers 400 to a filled company_fax honeypot, without calling Google', async () => {
   const fake = useGoogle();
-  const response = await post({ ...form, website: 'spam' });
+  const response = await post({ ...form, company_fax: 'spam' });
   assert.equal(response.status, 400);
   assert.ok(!('fields' in (await response.json())));
   assert.equal(fake.calls.length, 0);

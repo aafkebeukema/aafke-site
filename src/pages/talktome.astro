@@ -97,8 +97,8 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
         <!-- Honeypot: hidden from people, irresistible to bots. -->
         <div class="honeypot" aria-hidden="true">
-          <label for="talk-website">Website</label>
-          <input id="talk-website" name="website" tabindex="-1" autocomplete="off" />
+          <label for="talk-company-fax">Company fax</label>
+          <input id="talk-company-fax" name="company_fax" tabindex="-1" autocomplete="off" />
         </div>
 
         <p class="error" role="alert" data-form-error hidden></p>
@@ -132,6 +132,7 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 <script>
   import type { Availability } from '../data/talk-availability';
+  import { readBookingResponse } from '../lib/booking-response';
 
   /** A slot from the API, with its times parsed. */
   interface Slot {
@@ -457,17 +458,23 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
           email: value('email'),
           phone: value('phone'),
           note: value('topic'),
-          website: value('website'),
+          company_fax: value('company_fax'),
         }),
       });
       const result = await response.json().catch(() => ({}));
 
-      // Only confirm once Google has updated the event and made the Meet.
-      if (response.ok && result.meetUrl) {
-        const link = document.createElement('a');
-        link.href = result.meetUrl;
-        link.textContent = 'Google Meet';
-        els.meet.replaceChildren(link);
+      // A success means Google has booked the event, so confirm even if the
+      // Meet link isn't ready yet. Without one, "Google Meet" stays plain text.
+      const outcome = readBookingResponse(response.ok, result);
+      if (outcome.booked) {
+        if (outcome.meetUrl) {
+          const link = document.createElement('a');
+          link.href = outcome.meetUrl;
+          link.textContent = 'Google Meet';
+          els.meet.replaceChildren(link);
+        } else {
+          els.meet.replaceChildren('Google Meet');
+        }
         showStep('confirmed');
         return;
       }

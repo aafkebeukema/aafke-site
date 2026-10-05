@@ -1,9 +1,10 @@
 /**
  * POST /api/book: books one "Bookable time" slot from /talktome.
  *
- * Body (JSON): { slotId, name, email, phone?, note?, website }, where website
+ * Body (JSON): { slotId, name, email, phone?, note?, company_fax }, where company_fax
  * is the honeypot. Replies:
- *   200 { start, end, meetUrl }   booked, invitation sent by Google
+ *   200 { start, end, meetUrl? }  booked, invitation sent by Google. meetUrl is
+ *                                 left out if Google was slow to create the Meet
  *   400 { error, fields? }        invalid input or a filled honeypot
  *   409 { error }                 the slot is no longer available
  *   502 { error }                 Google failed; nothing was confirmed
