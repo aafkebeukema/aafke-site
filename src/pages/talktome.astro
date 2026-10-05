@@ -19,7 +19,7 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
       <p class="timezone">Times shown in <span data-timezone>your local time</span></p>
 
-      <div class="booking">
+      <div class="booking" aria-busy="true" data-booking>
         <div class="calendar" role="group" aria-label="Choose a date">
           <div class="month">
             <button type="button" class="month-arrow" aria-label="Previous month" data-prev>
@@ -216,6 +216,7 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     prev: $<HTMLButtonElement>('[data-prev]'),
     next: $<HTMLButtonElement>('[data-next]'),
     days: $('[data-days]'),
+    booking: $('[data-booking]'),
     times: $('[data-times]'),
     timesDate: $('[data-times-date]'),
     timeList: $('[data-time-list]'),
@@ -284,6 +285,7 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     if (!loaded) return;
     const slots = (selectedDay && slotsByDay.get(selectedDay)) || [];
     els.times.hidden = false;
+    els.times.classList.remove('is-loading');
     els.timesDate.textContent = slots.length
       ? zoneLongDate.format(slots[0].start)
       : 'No times this month';
@@ -516,33 +518,42 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   /** If times can't be loaded, say so where they would be and offer email. */
   function showLoadError() {
     els.times.hidden = false;
+    els.times.classList.remove('is-loading');
     els.timesDate.textContent = "Times couldn't be loaded";
     els.noTimes.hidden = false;
     els.timeList.replaceChildren();
     els.continue.hidden = true;
   }
 
+  // Start the request before anything else, then say it's on its way where
+  // the times will appear. "No times" only ever shows after a real answer.
+  const availabilityLoaded = loadAvailability();
+  els.times.hidden = false;
+  els.times.classList.add('is-loading');
+  els.timesDate.textContent = 'Loading available times…';
   renderCalendar();
 
-  loadAvailability().then(
-    () => {
-      loaded = true;
-      // Open on the first bookable day, so there are always times beside the
-      // calendar. If this month has nothing left, start on the month that does.
-      const firstDay = slotsByDay.keys().next().value;
-      if (firstDay) {
-        const [year, month] = firstDay.split('-').map(Number);
-        viewYear = year;
-        viewMonth = month - 1;
-      }
-      renderCalendar();
-      selectDay(firstDayInView(), { scroll: false });
-    },
-    (error) => {
-      console.error(error);
-      showLoadError();
-    },
-  );
+  availabilityLoaded
+    .finally(() => els.booking.setAttribute('aria-busy', 'false'))
+    .then(
+      () => {
+        loaded = true;
+        // Open on the first bookable day, so there are always times beside the
+        // calendar. If this month has nothing left, start on the month that does.
+        const firstDay = slotsByDay.keys().next().value;
+        if (firstDay) {
+          const [year, month] = firstDay.split('-').map(Number);
+          viewYear = year;
+          viewMonth = month - 1;
+        }
+        renderCalendar();
+        selectDay(firstDayInView(), { scroll: false });
+      },
+      (error) => {
+        console.error(error);
+        showLoadError();
+      },
+    );
 </script>
 
 <style is:global>
@@ -682,6 +693,11 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   .talk .no-times {
     font-size: 0.9375rem;
+    color: var(--muted);
+  }
+
+  .talk .times.is-loading .times-date {
+    font-weight: 400;
     color: var(--muted);
   }
 

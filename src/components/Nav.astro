@@ -12,6 +12,7 @@ const links = [
     menu: menuForService(service.id, service.href),
   })),
   { href: '/about', label: 'About', id: 'about', menu: [] as { href: string; label: string }[] },
+  { href: '/talktome', label: 'Talk to me', id: 'talktome', menu: [] as { href: string; label: string }[] },
 ];
 
 // A submenu of one is just the overview again, so it earns nothing.
@@ -189,7 +190,9 @@ const inSection = (menu: { href: string }[]) => menu.some((item) => isCurrent(it
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    gap: 0.75rem 1.5rem;
+    /* Tight enough for the wordmark and all four items to share one line
+       within the 34rem column. */
+    gap: 0.75rem 1rem;
   }
 
   .wordmark {
@@ -202,7 +205,7 @@ const inSection = (menu: { href: string }[]) => menu.some((item) => isCurrent(it
   .top {
     display: flex;
     flex-wrap: wrap;
-    gap: 1.25rem;
+    gap: 1rem;
     list-style: none;
     margin: 0;
     padding: 0;

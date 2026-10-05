@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
-import { afterEach, test } from 'node:test';
+import { afterEach, beforeEach, test } from 'node:test';
 
 import availability, { config } from '../netlify/functions/availability.ts';
 import {
+  accessToken,
   type CalendarEvent,
+  clearAccessTokenCache,
   GoogleCalendarError,
   listBookableSlots,
   readConfig,
@@ -11,6 +13,9 @@ import {
 } from '../netlify/lib/google-calendar.ts';
 
 const now = new Date('2026-10-05T12:00:00Z');
+
+// The access token is cached in module memory, so each test starts clean.
+beforeEach(clearAccessTokenCache);
 
 const env = {
   GOOGLE_CLIENT_ID: 'client-id',
@@ -120,12 +125,89 @@ test('names any missing environment variables', () => {
   );
 });
 
+// ------------------------------------------------------- access token cache
+
+const tokenServer = () => {
+  let issued = 0;
+  const fetch = (async () => Response.json({ access_token: `token-${++issued}`, expires_in: 3600 })) as typeof globalThis.fetch;
+  return { fetch, issued: () => issued };
+};
+
+test('reuses the access token while it is valid', async () => {
+  const google = tokenServer();
+  const config = readConfig(env);
+  const t0 = Date.parse('2026-10-05T12:00:00Z');
+  assert.equal(await accessToken(config, google.fetch, t0), 'token-1');
+  assert.equal(await accessToken(config, google.fetch, t0 + 30 * 60_000), 'token-1');
+  assert.equal(google.issued(), 1);
+});
+
+test('renews the token five minutes before it expires', async () => {
+  const google = tokenServer();
+  const config = readConfig(env);
+  const t0 = Date.parse('2026-10-05T12:00:00Z');
+  await accessToken(config, google.fetch, t0);
+  assert.equal(await accessToken(config, google.fetch, t0 + 54 * 60_000), 'token-1');
+  assert.equal(await accessToken(config, google.fetch, t0 + 56 * 60_000), 'token-2');
+});
+
+test('never reuses a token for different credentials', async () => {
+  const google = tokenServer();
+  await accessToken(readConfig(env), google.fetch);
+  await accessToken(readConfig({ ...env, GOOGLE_REFRESH_TOKEN: 'another-token' }), google.fetch);
+  assert.equal(google.issued(), 2);
+});
+
+test('does not cache when Google gives no expiry', async () => {
+  let issued = 0;
+  const fetch = (async () => Response.json({ access_token: `t${++issued}` })) as typeof globalThis.fetch;
+  await accessToken(readConfig(env), fetch);
+  await accessToken(readConfig(env), fetch);
+  assert.equal(issued, 2);
+});
+
+test('a second availability request skips the token exchange', async () => {
+  const google = fakeGoogle([{ items: [] }, { items: [] }]);
+  await listBookableSlots(readConfig(env), { fetch: google.fetch, now });
+  await listBookableSlots(readConfig(env), { fetch: google.fetch, now });
+  const tokenCalls = google.requests.filter((r) => r.url.hostname === 'oauth2.googleapis.com');
+  assert.equal(tokenCalls.length, 1);
+});
+
+test('gets a fresh token and retries once if Google rejects the cached one', async () => {
+  let issued = 0;
+  let calendarCalls = 0;
+  const fetch = (async (input: string | URL | Request) => {
+    const url = new URL(String(input));
+    if (url.hostname === 'oauth2.googleapis.com') {
+      return Response.json({ access_token: `token-${++issued}`, expires_in: 3600 });
+    }
+    calendarCalls++;
+    return calendarCalls === 1
+      ? new Response('Unauthorized', { status: 401 })
+      : Response.json({ items: [timed('a', '2026-10-07T09:30:00Z', '2026-10-07T09:55:00Z')] });
+  }) as typeof globalThis.fetch;
+
+  const slots = await listBookableSlots(readConfig(env), { fetch, now });
+  assert.equal(issued, 2);
+  assert.deepEqual(slots.map((slot) => slot.id), ['a']);
+});
+
+test('reports how long the token and calendar steps took', async () => {
+  const google = fakeGoogle([{ items: [] }]);
+  const timings: { token?: number; calendar?: number } = {};
+  await listBookableSlots(readConfig(env), { fetch: google.fetch, now, timings });
+  assert.equal(typeof timings.token, 'number');
+  assert.equal(typeof timings.calendar, 'number');
+});
+
 // The function itself, with Google faked through the global fetch.
 const realFetch = globalThis.fetch;
 const realEnv = { ...process.env };
 afterEach(() => {
   globalThis.fetch = realFetch;
   process.env = { ...realEnv };
+  clearAccessTokenCache();
 });
 
 const get = () => availability(new Request('http://localhost/api/availability'));
@@ -146,6 +228,7 @@ test('returns id, start and end for each slot, uncached', async () => {
   const response = await get();
   assert.equal(response.status, 200);
   assert.equal(response.headers.get('cache-control'), 'no-store');
+  assert.match(response.headers.get('server-timing') ?? '', /^token;dur=[\d.]+, calendar;dur=[\d.]+$/);
   assert.deepEqual(await response.json(), {
     slots: [{ id: 'evt1', start: start.toISOString(), end: end.toISOString() }],
   });

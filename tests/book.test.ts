@@ -1,10 +1,13 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { afterEach, test } from 'node:test';
+import { afterEach, beforeEach, test } from 'node:test';
 
 import book, { config } from '../netlify/functions/book.ts';
 import { bookedTitle, bookSlot, SlotUnavailableError, validateBooking } from '../netlify/lib/booking.ts';
-import { GoogleCalendarError, readConfig } from '../netlify/lib/google-calendar.ts';
+import { clearAccessTokenCache, GoogleCalendarError, readConfig } from '../netlify/lib/google-calendar.ts';
+
+// The access token is cached in module memory, so each test starts clean.
+beforeEach(clearAccessTokenCache);
 
 const env = {
   GOOGLE_CLIENT_ID: 'client-id',

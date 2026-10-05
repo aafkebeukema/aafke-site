@@ -72,7 +72,38 @@ export function eventsUrl(config: GoogleConfig): string {
   return `${CALENDAR_URL}/${encodeURIComponent(config.calendarId)}/events`;
 }
 
-export async function accessToken(config: GoogleConfig, fetchImpl: Fetch): Promise<string> {
+/**
+ * Google access tokens last about an hour, so one is kept in this function
+ * instance's memory and reused instead of swapping the refresh token on every
+ * request. It is renewed this long before it expires. Nothing is written
+ * anywhere; a cold start simply fetches a new one.
+ */
+const RENEW_BEFORE_MS = 5 * 60 * 1000;
+
+interface CachedToken {
+  /** Which credentials it belongs to, so changed settings never reuse it. */
+  key: string;
+  token: string;
+  expiresAt: number;
+}
+
+let cachedToken: CachedToken | null = null;
+
+/** Forget the cached access token, e.g. after Google rejects it. */
+export function clearAccessTokenCache(): void {
+  cachedToken = null;
+}
+
+export async function accessToken(
+  config: GoogleConfig,
+  fetchImpl: Fetch,
+  now: number = Date.now(),
+): Promise<string> {
+  const key = `${config.clientId}\n${config.refreshToken}`;
+  if (cachedToken?.key === key && now < cachedToken.expiresAt - RENEW_BEFORE_MS) {
+    return cachedToken.token;
+  }
+
   const response = await fetchImpl(TOKEN_URL, {
     method: 'POST',
     headers: { 'content-type': 'application/x-www-form-urlencoded' },
@@ -84,10 +115,18 @@ export async function accessToken(config: GoogleConfig, fetchImpl: Fetch): Promi
     }),
   });
   if (!response.ok) {
+    cachedToken = null;
     throw new GoogleCalendarError(`Token request failed: ${response.status} ${await response.text()}`);
   }
-  const { access_token: token } = (await response.json()) as { access_token?: string };
+  const { access_token: token, expires_in: expiresIn } = (await response.json()) as {
+    access_token?: string;
+    expires_in?: number;
+  };
   if (!token) throw new GoogleCalendarError('Token response had no access_token');
+
+  // Only cache when Google says how long the token lasts.
+  cachedToken =
+    typeof expiresIn === 'number' && expiresIn > 0 ? { key, token, expiresAt: now + expiresIn * 1000 } : null;
   return token;
 }
 
@@ -120,11 +159,25 @@ export function toSlots(events: CalendarEvent[], now: Date): AvailableSlot[] {
   return slots.sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
 }
 
+/** How long each step took, in milliseconds, for the Server-Timing header. */
+export interface Timings {
+  token?: number;
+  calendar?: number;
+}
+
 export async function listBookableSlots(
   config: GoogleConfig,
-  { fetch: fetchImpl = fetch, now = new Date() }: { fetch?: Fetch; now?: Date } = {},
+  {
+    fetch: fetchImpl = fetch,
+    now = new Date(),
+    timings = {},
+  }: { fetch?: Fetch; now?: Date; timings?: Timings } = {},
 ): Promise<AvailableSlot[]> {
-  const token = await accessToken(config, fetchImpl);
+  let started = performance.now();
+  let token = await accessToken(config, fetchImpl);
+  timings.token = performance.now() - started;
+  started = performance.now();
+  let retried = false;
   const timeMax = new Date(now.getTime() + WINDOW_DAYS * 24 * 60 * 60 * 1000);
   const events: CalendarEvent[] = [];
   let pageToken: string | undefined;
@@ -143,9 +196,18 @@ export async function listBookableSlots(
     });
     if (pageToken) params.set('pageToken', pageToken);
 
-    const response = await fetchImpl(`${eventsUrl(config)}?${params}`, {
+    let response = await fetchImpl(`${eventsUrl(config)}?${params}`, {
       headers: { authorization: `Bearer ${token}` },
     });
+    // A cached token Google no longer accepts: get a fresh one and try once more.
+    if (response.status === 401 && !retried) {
+      retried = true;
+      clearAccessTokenCache();
+      token = await accessToken(config, fetchImpl);
+      response = await fetchImpl(`${eventsUrl(config)}?${params}`, {
+        headers: { authorization: `Bearer ${token}` },
+      });
+    }
     if (!response.ok) {
       throw new GoogleCalendarError(
         `Calendar events request failed: ${response.status} ${await response.text()}`,
@@ -157,5 +219,6 @@ export async function listBookableSlots(
     if (!pageToken) break;
   }
 
+  timings.calendar = performance.now() - started;
   return toSlots(events, now);
 }
