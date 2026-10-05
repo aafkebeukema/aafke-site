@@ -67,6 +67,9 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         <p data-summary-date></p>
         <p data-summary-time></p>
         <p class="secondary">Google Meet</p>
+        <p class="change">
+          <button type="button" class="text-button" data-back>Choose another time</button>
+        </p>
       </div>
 
       <form class="details" novalidate data-form>
@@ -112,7 +115,6 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
             <span data-book-label>Book this time</span>
             <span aria-hidden="true">→</span>
           </button>
-          <button type="button" class="text-button" data-back>Choose another time</button>
         </div>
       </form>
     </div>
@@ -963,8 +965,9 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     min-height: 3.25rem;
   }
 
-  .talk .actions .text-button {
-    justify-self: center;
+  /* Right under the time it changes, so a wrong pick is easy to fix. */
+  .talk .summary .change {
+    margin-top: 0.25rem;
   }
 
   .talk .note {
