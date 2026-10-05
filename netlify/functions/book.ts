@@ -42,7 +42,10 @@ export default async function book(request: Request): Promise<Response> {
   try {
     // The cancellation link points back at whichever site took the booking.
     const origin = new URL(request.url).origin;
-    return reply(200, await bookSlot(readConfig(process.env), checked.booking, origin));
+    return reply(
+      200,
+      await bookSlot(readConfig(process.env), checked.booking, origin, { notifyEmail: notifyEmail() }),
+    );
   } catch (error) {
     if (error instanceof SlotUnavailableError) {
       return reply(409, { error: 'Sorry, that time has just gone. Please choose another.' });
@@ -51,6 +54,16 @@ export default async function book(request: Request): Promise<Response> {
     console.error('POST /api/book failed:', error);
     return reply(502, { error: 'The booking could not be made.' });
   }
+}
+
+/**
+ * BOOKING_NOTIFY_EMAIL, if set, is added as a hidden guest on every booking so
+ * Aafke gets the invitation (and later the cancellation) in her own inbox. It
+ * lives in Netlify settings to keep the address out of the public repo.
+ */
+function notifyEmail(): string | undefined {
+  const email = process.env.BOOKING_NOTIFY_EMAIL?.trim();
+  return email && /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/.test(email) ? email : undefined;
 }
 
 export const config = { path: '/api/book' };

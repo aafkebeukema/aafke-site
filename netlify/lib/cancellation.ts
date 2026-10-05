@@ -68,6 +68,7 @@ export const RESTORE_PATCH = {
   summary: BOOKABLE_TITLE,
   description: null,
   attendees: [],
+  guestsCanSeeOtherGuests: null,
   conferenceData: null,
   extendedProperties: { private: { cancelToken: null } },
 };

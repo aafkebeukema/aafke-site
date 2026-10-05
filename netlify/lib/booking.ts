@@ -127,6 +127,21 @@ function description(booking: BookingRequest, cancelLink: string): string {
   return lines.join('\n');
 }
 
+type Guest = { email?: string; displayName?: string };
+
+/** Adds guests, skipping anyone already invited (e.g. Aafke booking herself to test). */
+function withGuests(existing: Guest[], added: Guest[]): Guest[] {
+  const guests = [...existing];
+  const seen = new Set(existing.map((guest) => guest.email?.toLowerCase()));
+  for (const guest of added) {
+    const key = guest.email?.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    guests.push(guest);
+  }
+  return guests;
+}
+
 interface MeetEvent extends CalendarEvent {
   etag?: string;
   hangoutLink?: string;
@@ -152,7 +167,15 @@ export async function bookSlot(
     now = new Date(),
     cancelToken = newCancelToken(),
     wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
-  }: { fetch?: Fetch; now?: Date; cancelToken?: string; wait?: (ms: number) => Promise<void> } = {},
+    notifyEmail,
+  }: {
+    fetch?: Fetch;
+    now?: Date;
+    cancelToken?: string;
+    wait?: (ms: number) => Promise<void>;
+    /** Aafke's own address, added as a hidden extra guest so she hears about every booking. */
+    notifyEmail?: string;
+  } = {},
 ): Promise<BookingResult> {
   const token = await accessToken(config, fetchImpl);
   const auth = { authorization: `Bearer ${token}` };
@@ -188,7 +211,12 @@ export async function bookSlot(
     body: JSON.stringify({
       summary: bookedTitle(booking.name),
       description: description(booking, cancelUrl(origin, booking.slotId, cancelToken)),
-      attendees: [...(event.attendees ?? []), { email: booking.email, displayName: booking.name }],
+      attendees: withGuests(event.attendees ?? [], [
+        { email: booking.email, displayName: booking.name },
+        ...(notifyEmail ? [{ email: notifyEmail }] : []),
+      ]),
+      // The booker never sees who else is invited, so Aafke's address stays private.
+      ...(notifyEmail && { guestsCanSeeOtherGuests: false }),
       conferenceData: {
         createRequest: { requestId: randomUUID(), conferenceSolutionKey: { type: 'hangoutsMeet' } },
       },

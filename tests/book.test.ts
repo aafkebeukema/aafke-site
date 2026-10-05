@@ -200,6 +200,37 @@ test('keeps existing attendees and private properties', async () => {
   assert.deepEqual(body.extendedProperties.private, { source: 'kept', cancelToken: 't' });
 });
 
+test('adds Aafke as a hidden extra guest when a notify address is set', async () => {
+  const fake = fakeGoogle();
+  await bookSlot(google, checked(), ORIGIN, { fetch: fake.fetch, notifyEmail: 'aafke@example.com' });
+  const body = fake.calls.find((call) => call.method === 'PATCH')!.body;
+  assert.deepEqual(body.attendees, [
+    { email: 'sam@example.com', displayName: 'Sam Smith' },
+    { email: 'aafke@example.com' },
+  ]);
+  assert.equal(body.guestsCanSeeOtherGuests, false, 'the booker cannot see her address');
+});
+
+test('changes nothing about guests when no notify address is set', async () => {
+  const fake = fakeGoogle();
+  await bookSlot(google, checked(), ORIGIN, { fetch: fake.fetch });
+  const body = fake.calls.find((call) => call.method === 'PATCH')!.body;
+  assert.deepEqual(body.attendees, [{ email: 'sam@example.com', displayName: 'Sam Smith' }]);
+  assert.ok(!('guestsCanSeeOtherGuests' in body));
+});
+
+test('does not invite the same address twice when Aafke books herself', async () => {
+  const fake = fakeGoogle();
+  await bookSlot(
+    google,
+    { slotId: 'slot123', name: 'Aafke', email: 'Aafke@Example.com' },
+    ORIGIN,
+    { fetch: fake.fetch, notifyEmail: 'aafke@example.com' },
+  );
+  const body = fake.calls.find((call) => call.method === 'PATCH')!.body;
+  assert.deepEqual(body.attendees, [{ email: 'Aafke@Example.com', displayName: 'Aafke' }]);
+});
+
 test('generates a different high-entropy cancel token for each booking', async () => {
   const tokens = new Set<string>();
   for (let i = 0; i < 2; i++) {
@@ -329,6 +360,22 @@ test('builds the cancellation link from the request origin, not a fixed URL', as
   assert.ok(
     description.includes(`https://talktome--aafke-co-uk.netlify.app/talktome/cancel?eventId=slot123&token=${token}`),
   );
+});
+
+test('takes the notify address from BOOKING_NOTIFY_EMAIL, ignoring anything invalid', async () => {
+  for (const [value, expected] of [
+    ['aafke@example.com', 'aafke@example.com'],
+    ['  aafke@example.com  ', 'aafke@example.com'],
+    ['not-an-email', undefined],
+    ['', undefined],
+  ] as const) {
+    const fake = useGoogle();
+    process.env.BOOKING_NOTIFY_EMAIL = value;
+    await post(form);
+    const emails = fake.calls.find((call) => call.method === 'PATCH')!.body.attendees.map((a: { email: string }) => a.email);
+    assert.deepEqual(emails, expected ? ['sam@example.com', expected] : ['sam@example.com'], JSON.stringify(value));
+    clearAccessTokenCache();
+  }
 });
 
 test('books and returns only start, end and the Meet link', async () => {

@@ -147,6 +147,19 @@ test('a valid cancellation restores the same event to an empty Bookable time slo
   }
 });
 
+test('cancelling also removes Aafke as a guest and un-hides the guest list', async () => {
+  const calendar = fakeCalendar();
+  await bookSlot(google, guest, ORIGIN, { fetch: calendar.fetch, wait: async () => {}, notifyEmail: 'aafke@example.com' });
+  assert.equal(calendar.event.attendees.length, 2);
+  assert.equal(calendar.event.guestsCanSeeOtherGuests, false);
+  const token = calendar.event.extendedProperties.private.cancelToken;
+
+  await cancelBooking(google, { eventId: 'slot123', token }, { fetch: calendar.fetch });
+  assert.deepEqual(calendar.event.attendees, []);
+  assert.ok(!('guestsCanSeeOtherGuests' in calendar.event));
+  assert.ok(!JSON.stringify(calendar.event).includes('aafke@example.com'));
+});
+
 test('sends the restore to the same event, guarded and with notifications', async () => {
   const calendar = fakeCalendar();
   const token = await bookIt(calendar);
