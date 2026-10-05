@@ -913,7 +913,9 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
        whether or not a date has been picked. */
     .talk .booking {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 12rem;
+      /* Wide enough for the longest date heading, "Wednesday 30 September",
+         to stay on one line. */
+      grid-template-columns: minmax(0, 1fr) 14rem;
       gap: 2.5rem;
     }
 
