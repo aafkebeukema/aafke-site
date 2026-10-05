@@ -251,9 +251,14 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     const leading = (new Date(Date.UTC(viewYear, viewMonth, 1)).getUTCDay() + 6) % 7;
     const count = new Date(Date.UTC(viewYear, viewMonth + 1, 0)).getUTCDate();
-    const cells: HTMLElement[] = Array.from({ length: leading }, () =>
-      document.createElement('span'),
-    );
+    /** An empty cell the same size as a date, so empty rows keep their height. */
+    const blank = () => {
+      const cell = document.createElement('span');
+      cell.className = 'day blank';
+      cell.setAttribute('aria-hidden', 'true');
+      return cell;
+    };
+    const cells: HTMLElement[] = Array.from({ length: leading }, blank);
 
     for (let day = 1; day <= count; day++) {
       const key = `${viewYear}-${pad(viewMonth + 1)}-${pad(day)}`;
@@ -281,6 +286,9 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
       }
     }
 
+    // Always six weeks, the most any month needs, so the calendar stays the
+    // same height and nothing below it moves when the month changes.
+    while (cells.length < 42) cells.push(blank());
     els.days.replaceChildren(...cells);
   }
 
@@ -540,7 +548,7 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
       const lit = [...els.days.querySelectorAll<HTMLElement>('.ring')];
       lit.forEach((cell) => Math.random() < 0.6 && cell.classList.remove('ring'));
       // Today onwards only: past dates are never bookable, so never checked.
-      const dates = [...els.days.querySelectorAll<HTMLElement>('.day:not(.past):not(.ring)')];
+      const dates = [...els.days.querySelectorAll<HTMLElement>('.day:not(.past):not(.blank):not(.ring)')];
       const room = MAX_RINGS - els.days.querySelectorAll('.ring').length;
       for (let i = Math.min(room, 1 + Math.floor(Math.random() * 2)); i > 0 && dates.length; i--) {
         dates.splice(Math.floor(Math.random() * dates.length), 1)[0].classList.add('ring');
@@ -716,6 +724,10 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   }
 
   /* Reduced motion: the dates simply rest a little lighter until they load. */
+  .talk .day.blank {
+    visibility: hidden;
+  }
+
   .talk .days.is-waiting .day:not(.past) {
     opacity: 0.55;
   }
