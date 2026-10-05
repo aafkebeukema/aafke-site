@@ -11,8 +11,18 @@ import type { AvailableSlot } from '../../src/data/talk-availability.ts';
 /** Only events with exactly this title are offered as bookable. */
 export const BOOKABLE_TITLE = 'Bookable time';
 
-/** How far ahead to look. */
-export const WINDOW_DAYS = 90;
+/** How far ahead to look: this calendar month and the next five. */
+export const BOOKING_MONTHS = 6;
+
+/**
+ * Where the availability window ends: the start of the month after the last
+ * one offered (UTC). Ending on a month boundary means no month is ever only
+ * partly loaded, so a month the calendar shows is either complete or not
+ * offered at all.
+ */
+export function windowEnd(now: Date): Date {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + BOOKING_MONTHS, 1));
+}
 
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const CALENDAR_URL = 'https://www.googleapis.com/calendar/v3/calendars';
@@ -178,7 +188,7 @@ export async function listBookableSlots(
   timings.token = performance.now() - started;
   started = performance.now();
   let retried = false;
-  const timeMax = new Date(now.getTime() + WINDOW_DAYS * 24 * 60 * 60 * 1000);
+  const timeMax = windowEnd(now);
   const events: CalendarEvent[] = [];
   let pageToken: string | undefined;
 

@@ -189,11 +189,18 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   // shows with no circles and the times column stays empty.
   const slotsByDay = new Map<string, Slot[]>();
   let loaded = false;
+  /** The last month the API covers, as year * 12 + month, once it has loaded. */
+  let lastMonth = Infinity;
 
   async function loadAvailability() {
     const response = await fetch('/api/availability', { headers: { accept: 'application/json' } });
     if (!response.ok) throw new Error(`GET /api/availability failed: ${response.status}`);
     const availability: Availability = await response.json();
+    if (availability.until) {
+      // The window ends at the start of a month, so the month before is the last one.
+      const end = new Date(Date.parse(availability.until) - 1);
+      lastMonth = end.getUTCFullYear() * 12 + end.getUTCMonth();
+    }
 
     availability.slots
       .map((slot) => ({ id: slot.id, start: new Date(slot.start), end: new Date(slot.end) }))
@@ -239,6 +246,8 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     els.monthName.textContent = monthName.format(new Date(Date.UTC(viewYear, viewMonth, 1)));
     // Nothing is bookable before this month, so there is nowhere to go back to.
     els.prev.disabled = viewYear === firstYear && viewMonth === firstMonth - 1;
+    // Months beyond the window were never fetched, so don't offer them as empty.
+    els.next.disabled = viewYear * 12 + viewMonth >= lastMonth;
 
     const leading = (new Date(Date.UTC(viewYear, viewMonth, 1)).getUTCDay() + 6) % 7;
     const count = new Date(Date.UTC(viewYear, viewMonth + 1, 0)).getUTCDate();

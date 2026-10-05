@@ -10,6 +10,7 @@ import {
   listBookableSlots,
   readConfig,
   toSlots,
+  windowEnd,
 } from '../netlify/lib/google-calendar.ts';
 
 const now = new Date('2026-10-05T12:00:00Z');
@@ -73,7 +74,7 @@ test("uses each event's own end time rather than a fixed length", () => {
   assert.equal(slot.end, '2026-10-07T10:00:00.000Z');
 });
 
-test('swaps the refresh token for an access token, then asks for 90 days of single events', async () => {
+test('swaps the refresh token for an access token, then asks for six whole months of single events', async () => {
   const google = fakeGoogle([{ items: [timed('a', '2026-10-07T09:30:00Z', '2026-10-07T09:55:00Z')] }]);
   const slots = await listBookableSlots(readConfig(env), { fetch: google.fetch, now });
 
@@ -90,7 +91,8 @@ test('swaps the refresh token for an access token, then asks for 90 days of sing
   assert.equal(new Headers(events.init?.headers).get('authorization'), 'Bearer access-token');
   const query = events.url.searchParams;
   assert.equal(query.get('timeMin'), '2026-10-05T12:00:00.000Z');
-  assert.equal(query.get('timeMax'), '2027-01-03T12:00:00.000Z');
+  // 5 October 2026: October to March inclusive, ending on 1 April.
+  assert.equal(query.get('timeMax'), '2027-04-01T00:00:00.000Z');
   assert.equal(query.get('singleEvents'), 'true');
   assert.equal(query.get('q'), 'Bookable time');
 
@@ -193,6 +195,21 @@ test('gets a fresh token and retries once if Google rejects the cached one', asy
   assert.deepEqual(slots.map((slot) => slot.id), ['a']);
 });
 
+test('the window always ends on the first of a month, six months on', () => {
+  assert.equal(windowEnd(new Date('2026-10-05T12:00:00Z')).toISOString(), '2027-04-01T00:00:00.000Z');
+  assert.equal(windowEnd(new Date('2026-10-31T23:59:00Z')).toISOString(), '2027-04-01T00:00:00.000Z');
+  assert.equal(windowEnd(new Date('2026-12-15T09:00:00Z')).toISOString(), '2027-06-01T00:00:00.000Z');
+});
+
+test('includes January 2027 slots that the old 90-day window cut off', async () => {
+  const google = fakeGoogle([
+    { items: [timed('jan', '2027-01-20T10:00:00Z', '2027-01-20T10:25:00Z')] },
+  ]);
+  const slots = await listBookableSlots(readConfig(env), { fetch: google.fetch, now });
+  assert.deepEqual(slots.map((slot) => slot.id), ['jan']);
+  assert.ok(Date.parse(google.requests[1].url.searchParams.get('timeMax')!) > Date.parse('2027-01-31T23:59:59Z'));
+});
+
 test('reports how long the token and calendar steps took', async () => {
   const google = fakeGoogle([{ items: [] }]);
   const timings: { token?: number; calendar?: number } = {};
@@ -229,9 +246,9 @@ test('returns id, start and end for each slot, uncached', async () => {
   assert.equal(response.status, 200);
   assert.equal(response.headers.get('cache-control'), 'no-store');
   assert.match(response.headers.get('server-timing') ?? '', /^token;dur=[\d.]+, calendar;dur=[\d.]+$/);
-  assert.deepEqual(await response.json(), {
-    slots: [{ id: 'evt1', start: start.toISOString(), end: end.toISOString() }],
-  });
+  const body = await response.json();
+  assert.deepEqual(body.slots, [{ id: 'evt1', start: start.toISOString(), end: end.toISOString() }]);
+  assert.match(body.until, /^\d{4}-\d{2}-01T00:00:00\.000Z$/, 'the window ends on a month boundary');
 });
 
 test('fails with a plain 502 that gives nothing away', async () => {

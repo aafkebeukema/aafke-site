@@ -16,4 +16,6 @@ export interface AvailableSlot {
 /** The body of GET /api/availability. */
 export interface Availability {
   slots: AvailableSlot[];
+  /** Where the window ends (exclusive). Nothing on or after this was looked at. */
+  until: string;
 }
