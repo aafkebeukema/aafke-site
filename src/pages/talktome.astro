@@ -755,11 +755,18 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     border-color: var(--ink);
   }
 
-  .talk .day[aria-pressed='true'],
-  .talk .time[aria-pressed='true'] {
+  .talk .day[aria-pressed='true'] {
     background: var(--ink);
     border-color: var(--ink);
     color: var(--paper);
+  }
+
+  /* A chosen time is outlined, not filled, so Continue stays the one solid
+     button. The inset ring doubles the border without resizing the button. */
+  .talk .time[aria-pressed='true'] {
+    border-color: var(--ink);
+    box-shadow: inset 0 0 0 1px var(--ink);
+    font-weight: 500;
   }
 
   .talk .times-date {
