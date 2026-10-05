@@ -1,0 +1,919 @@
+---
+import Layout from '../layouts/Layout.astro';
+import '../styles/page.css';
+import { MEETING_MINUTES } from '../data/talk-availability';
+
+const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+---
+
+<Layout
+  title="Talk to me | Aafke Beukema"
+  description={`Book a ${MEETING_MINUTES}-minute Google Meet with Aafke Beukema.`}
+>
+  <main class="talk">
+    <div class="step" data-step="calendar">
+      <header class="intro">
+        <p class="eyebrow">{MEETING_MINUTES} minutes · Google Meet</p>
+        <h1 tabindex="-1">Talk to me</h1>
+      </header>
+
+      <p class="timezone">Times shown in <span data-timezone>your local time</span></p>
+
+      <div class="booking">
+        <div class="calendar" role="group" aria-label="Choose a date">
+          <div class="month">
+            <button type="button" class="month-arrow" aria-label="Previous month" data-prev>
+              <span aria-hidden="true">←</span>
+            </button>
+            <h2 class="month-name" aria-live="polite" data-month-name></h2>
+            <button type="button" class="month-arrow" aria-label="Next month" data-next>
+              <span aria-hidden="true">→</span>
+            </button>
+          </div>
+
+          <div class="grid weekdays" aria-hidden="true">
+            {weekdays.map((day) => <span>{day}</span>)}
+          </div>
+          <div class="grid days" data-days></div>
+        </div>
+
+        <div class="times" data-times hidden>
+          <h2 class="times-date" data-times-date></h2>
+          <p class="no-times" data-no-times hidden>
+            <a href="mailto:hello@aafke.co.uk">Email me to book some time</a>
+          </p>
+          <div class="time-list" role="group" aria-label="Choose a time" data-time-list></div>
+          <button type="button" class="button continue" data-continue hidden>Continue</button>
+        </div>
+      </div>
+
+      <noscript>
+        <p class="spaced">
+          The calendar needs JavaScript. You can also email
+          <a href="mailto:hello@aafke.co.uk">hello@aafke.co.uk</a>.
+        </p>
+      </noscript>
+    </div>
+
+    <div class="step narrow" data-step="details" hidden>
+      <p class="eyebrow">Talk to me</p>
+      <h1 tabindex="-1">Your details</h1>
+
+      <div class="summary">
+        <p data-summary-date></p>
+        <p data-summary-time></p>
+        <p class="secondary">Google Meet</p>
+      </div>
+
+      <form class="details" novalidate data-form>
+        <div class="field">
+          <label for="talk-name">Name</label>
+          <input id="talk-name" name="name" autocomplete="name" placeholder="Your name" required aria-describedby="talk-name-error" />
+          <p class="error" id="talk-name-error" hidden></p>
+        </div>
+        <div class="field">
+          <label for="talk-email">Email</label>
+          <input
+            id="talk-email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            placeholder="you@example.com"
+            required
+            aria-describedby="talk-email-error"
+          />
+          <p class="error" id="talk-email-error" hidden></p>
+        </div>
+        <div class="field">
+          <label for="talk-phone">Phone number</label>
+          <input id="talk-phone" name="phone" type="tel" autocomplete="tel" placeholder="Optional" />
+        </div>
+        <div class="field">
+          <label for="talk-topic">
+            What would you like to chat about?
+          </label>
+          <textarea id="talk-topic" name="topic" rows="4" placeholder="Optional"></textarea>
+        </div>
+
+        <!-- Honeypot: hidden from people, irresistible to bots. -->
+        <div class="honeypot" aria-hidden="true">
+          <label for="talk-company-fax">Company fax</label>
+          <input id="talk-company-fax" name="company_fax" tabindex="-1" autocomplete="off" />
+        </div>
+
+        <p class="error" role="alert" data-form-error hidden></p>
+
+        <div class="actions">
+          <button type="submit" class="button book" data-book>
+            <span data-book-label>Book this time</span>
+            <span aria-hidden="true">→</span>
+          </button>
+          <button type="button" class="text-button" data-back>Choose another time</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="step narrow" data-step="confirmed" hidden>
+      <p class="eyebrow">Conversation booked</p>
+      <h1 tabindex="-1">You're booked</h1>
+
+      <div class="summary">
+        <p data-summary-date></p>
+        <p data-summary-time></p>
+        <p class="secondary" data-summary-timezone></p>
+        <p class="secondary" data-summary-meet>Google Meet</p>
+      </div>
+
+      <p class="note">A calendar invitation has been sent to your email.</p>
+      <p class="home"><a href="/">Back to the homepage</a></p>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  import type { Availability } from '../data/talk-availability';
+  import { readBookingResponse } from '../lib/booking-response';
+
+  /** A slot from the API, with its times parsed. */
+  interface Slot {
+    id: string;
+    start: Date;
+    end: Date;
+  }
+
+  const root = document.querySelector<HTMLElement>('main.talk')!;
+  const $ = <T extends HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
+
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/London';
+  const timezoneLabel = timezone.replace(/_/g, ' ');
+
+  // Slots are exact moments, so everything about them is read in the
+  // visitor's timezone. Calendar cells are just dates, so they use UTC to stay
+  // clear of any daylight-saving edge.
+  const inZone = (options: Intl.DateTimeFormatOptions) =>
+    new Intl.DateTimeFormat('en-GB', { timeZone: timezone, ...options });
+  const zoneParts = inZone({ year: 'numeric', month: '2-digit', day: '2-digit' });
+  const zoneClock = inZone({ hour: 'numeric', minute: '2-digit', hourCycle: 'h12' });
+  const zoneLongDate = inZone({ weekday: 'long', day: 'numeric', month: 'long' });
+  const cellLongDate = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'UTC',
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+  const monthName = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'UTC',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  /** UK style: 9:30am, 12pm, 2pm. The minutes are dropped on the hour. */
+  function clockTime(moment: Date) {
+    const parts = Object.fromEntries(zoneClock.formatToParts(moment).map((p) => [p.type, p.value]));
+    const minutes = parts.minute === '00' ? '' : `:${parts.minute}`;
+    return `${parts.hour}${minutes}${parts.dayPeriod.toLowerCase()}`;
+  }
+
+  /** YYYY-MM-DD for a moment, as the visitor's calendar sees it. */
+  function dayKey(moment: Date) {
+    const parts = Object.fromEntries(zoneParts.formatToParts(moment).map((p) => [p.type, p.value]));
+    return `${parts.year}-${parts.month}-${parts.day}`;
+  }
+
+  const now = new Date();
+  const todayKey = dayKey(now);
+
+  // Filled from /api/availability once it loads. Until then the calendar
+  // shows with no circles and the times column stays empty.
+  const slotsByDay = new Map<string, Slot[]>();
+  let loaded = false;
+
+  async function loadAvailability() {
+    const response = await fetch('/api/availability', { headers: { accept: 'application/json' } });
+    if (!response.ok) throw new Error(`GET /api/availability failed: ${response.status}`);
+    const availability: Availability = await response.json();
+
+    availability.slots
+      .map((slot) => ({ id: slot.id, start: new Date(slot.start), end: new Date(slot.end) }))
+      .filter((slot) => slot.start > now)
+      .sort((a, b) => a.start.getTime() - b.start.getTime())
+      .forEach((slot) => {
+        const key = dayKey(slot.start);
+        slotsByDay.set(key, [...(slotsByDay.get(key) ?? []), slot]);
+      });
+  }
+
+  const [firstYear, firstMonth] = todayKey.split('-').map(Number);
+  let viewYear = firstYear;
+  let viewMonth = firstMonth - 1;
+  let selectedDay: string | null = null;
+  let selectedSlot: Slot | null = null;
+
+  const els = {
+    monthName: $('[data-month-name]'),
+    prev: $<HTMLButtonElement>('[data-prev]'),
+    next: $<HTMLButtonElement>('[data-next]'),
+    days: $('[data-days]'),
+    times: $('[data-times]'),
+    timesDate: $('[data-times-date]'),
+    timeList: $('[data-time-list]'),
+    noTimes: $('[data-no-times]'),
+    continue: $<HTMLButtonElement>('[data-continue]'),
+    form: $<HTMLFormElement>('[data-form]'),
+    formError: $('[data-form-error]'),
+    book: $<HTMLButtonElement>('[data-book]'),
+    bookLabel: $('[data-book-label]'),
+    meet: $('[data-summary-meet]'),
+    back: $<HTMLButtonElement>('[data-back]'),
+  };
+
+  root.querySelectorAll('[data-timezone]').forEach((el) => (el.textContent = timezoneLabel));
+
+  const prefersMotion = () => !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isStacked = () => window.matchMedia('(max-width: 47.99rem)').matches;
+
+  function renderCalendar() {
+    els.monthName.textContent = monthName.format(new Date(Date.UTC(viewYear, viewMonth, 1)));
+    // Nothing is bookable before this month, so there is nowhere to go back to.
+    els.prev.disabled = viewYear === firstYear && viewMonth === firstMonth - 1;
+
+    const leading = (new Date(Date.UTC(viewYear, viewMonth, 1)).getUTCDay() + 6) % 7;
+    const count = new Date(Date.UTC(viewYear, viewMonth + 1, 0)).getUTCDate();
+    const cells: HTMLElement[] = Array.from({ length: leading }, () =>
+      document.createElement('span'),
+    );
+
+    for (let day = 1; day <= count; day++) {
+      const key = `${viewYear}-${pad(viewMonth + 1)}-${pad(day)}`;
+      const past = key < todayKey;
+      const available = !past && slotsByDay.has(key);
+
+      if (available) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'day available';
+        button.dataset.day = key;
+        button.textContent = String(day);
+        button.setAttribute('aria-pressed', String(key === selectedDay));
+        button.setAttribute(
+          'aria-label',
+          `${cellLongDate.format(new Date(Date.UTC(viewYear, viewMonth, day)))}, times available`,
+        );
+        button.addEventListener('click', () => selectDay(key));
+        cells.push(button);
+      } else {
+        const cell = document.createElement('span');
+        cell.className = past ? 'day past' : 'day';
+        cell.textContent = String(day);
+        cells.push(cell);
+      }
+    }
+
+    els.days.replaceChildren(...cells);
+  }
+
+  /** The first bookable day in the month on view, if it has one. */
+  function firstDayInView() {
+    const prefix = `${viewYear}-${pad(viewMonth + 1)}-`;
+    return [...slotsByDay.keys()].find((key) => key.startsWith(prefix)) ?? null;
+  }
+
+  function renderTimes() {
+    if (!loaded) return;
+    const slots = (selectedDay && slotsByDay.get(selectedDay)) || [];
+    els.times.hidden = false;
+    els.timesDate.textContent = slots.length
+      ? zoneLongDate.format(slots[0].start)
+      : 'No times this month';
+    els.noTimes.hidden = slots.length > 0;
+    els.timeList.replaceChildren(
+      ...slots.map((slot) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'time';
+        button.textContent = clockTime(slot.start);
+        button.setAttribute('aria-pressed', String(slot === selectedSlot));
+        button.addEventListener('click', () => selectSlot(slot, button));
+        return button;
+      }),
+    );
+    els.continue.hidden = !selectedSlot;
+  }
+
+  function selectDay(key: string | null, { scroll = true } = {}) {
+    selectedDay = key;
+    selectedSlot = null;
+    els.days.querySelectorAll<HTMLElement>('[data-day]').forEach((button) => {
+      button.setAttribute('aria-pressed', String(button.dataset.day === key));
+    });
+    renderTimes();
+    if (scroll && isStacked()) {
+      els.times.scrollIntoView({ block: 'nearest', behavior: prefersMotion() ? 'smooth' : 'auto' });
+    }
+  }
+
+  function selectSlot(slot: Slot, chosen: HTMLElement) {
+    selectedSlot = slot;
+    els.timeList.querySelectorAll('.time').forEach((button) => {
+      button.setAttribute('aria-pressed', String(button === chosen));
+    });
+    els.continue.hidden = false;
+  }
+
+  function changeMonth(delta: number) {
+    const next = new Date(Date.UTC(viewYear, viewMonth + delta, 1));
+    viewYear = next.getUTCFullYear();
+    viewMonth = next.getUTCMonth();
+    renderCalendar();
+    selectDay(firstDayInView(), { scroll: false });
+  }
+
+  /** Uses the slot's own end time from the calendar, not a calculated one. */
+  function fillSummaries({ start, end }: Slot) {
+    const fill = (selector: string, text: string) =>
+      root.querySelectorAll(selector).forEach((el) => (el.textContent = text));
+    fill('[data-summary-date]', zoneLongDate.format(start));
+    fill('[data-summary-time]', `${clockTime(start)} to ${clockTime(end)}`);
+    fill('[data-summary-timezone]', timezoneLabel);
+  }
+
+  /** Swap the visible step and hand focus to its heading, so the change is announced. */
+  function showStep(name: 'calendar' | 'details' | 'confirmed', focus?: HTMLElement | null) {
+    root.querySelectorAll<HTMLElement>('[data-step]').forEach((step) => {
+      step.hidden = step.dataset.step !== name;
+    });
+    window.scrollTo({ top: 0 });
+    const target = focus ?? root.querySelector<HTMLElement>(`[data-step="${name}"] h1`);
+    target?.focus({ preventScroll: true });
+  }
+
+  els.prev.addEventListener('click', () => changeMonth(-1));
+  els.next.addEventListener('click', () => changeMonth(1));
+
+  els.continue.addEventListener('click', () => {
+    if (!selectedSlot) return;
+    fillSummaries(selectedSlot);
+    els.formError.hidden = true;
+    showStep('details');
+  });
+
+  els.back.addEventListener('click', () => {
+    showStep('calendar', els.timeList.querySelector<HTMLElement>('[aria-pressed="true"]'));
+  });
+
+  // The browser's own validation bubbles don't suit the page, so the form is
+  // novalidate and the messages are written in under each field instead.
+  const required: { input: HTMLInputElement; missing: string; invalid?: string }[] = [
+    { input: $('#talk-name'), missing: 'Please add your name.' },
+    {
+      input: $('#talk-email'),
+      missing: 'Please add your email address.',
+      invalid: "That doesn't look like an email address.",
+    },
+  ];
+
+  /** Shows or clears a field's message. Returns whether the field is fine. */
+  function checkField({ input, missing, invalid }: (typeof required)[number]) {
+    const message = !input.value.trim()
+      ? missing
+      : invalid && !input.checkValidity()
+        ? invalid
+        : '';
+    setFieldError(input, message);
+    return !message;
+  }
+
+  function setFieldError(input: HTMLInputElement, message: string) {
+    const error = root.querySelector<HTMLElement>(`#${input.id}-error`)!;
+    error.textContent = message;
+    error.hidden = !message;
+    if (message) input.setAttribute('aria-invalid', 'true');
+    else input.removeAttribute('aria-invalid');
+  }
+
+  // Once a field has been flagged, clear the message as soon as it's fixed.
+  required.forEach((field) => {
+    field.input.addEventListener('input', () => {
+      if (field.input.hasAttribute('aria-invalid')) checkField(field);
+    });
+  });
+
+  /** A message above the buttons for problems that aren't about one field. */
+  function showFormError(message: string, { email = false } = {}) {
+    els.formError.replaceChildren(message);
+    if (email) {
+      const link = document.createElement('a');
+      link.href = 'mailto:hello@aafke.co.uk';
+      link.textContent = 'hello@aafke.co.uk';
+      els.formError.append(' ', 'You can also email ', link, '.');
+    }
+    els.formError.hidden = false;
+  }
+
+  /** The slot was taken while the form was open, so drop it from the calendar. */
+  function forgetSlot(slot: Slot) {
+    const day = dayKey(slot.start);
+    const left = (slotsByDay.get(day) ?? []).filter((other) => other !== slot);
+    if (left.length) slotsByDay.set(day, left);
+    else slotsByDay.delete(day);
+    renderCalendar();
+    selectDay(slotsByDay.has(day) ? day : firstDayInView(), { scroll: false });
+  }
+
+  function setBooking(busy: boolean) {
+    els.book.disabled = busy;
+    els.book.setAttribute('aria-busy', String(busy));
+    els.bookLabel.textContent = busy ? 'Booking…' : 'Book this time';
+  }
+
+  let submitting = false;
+
+  els.form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (submitting || !selectedSlot) return;
+    els.formError.hidden = true;
+
+    // Check every field so all the messages show, then focus the first.
+    const problems = required.filter((field) => !checkField(field));
+    if (problems.length) {
+      problems[0].input.focus();
+      return;
+    }
+
+    const slot = selectedSlot;
+    const form = new FormData(els.form);
+    const value = (name: string) => String(form.get(name) ?? '');
+    submitting = true;
+    setBooking(true);
+
+    try {
+      const response = await fetch('/api/book', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify({
+          slotId: slot.id,
+          name: value('name'),
+          email: value('email'),
+          phone: value('phone'),
+          note: value('topic'),
+          company_fax: value('company_fax'),
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+
+      // A success means Google has booked the event, so confirm even if the
+      // Meet link isn't ready yet. Without one, "Google Meet" stays plain text.
+      const outcome = readBookingResponse(response.ok, result);
+      if (outcome.booked) {
+        if (outcome.meetUrl) {
+          const link = document.createElement('a');
+          link.href = outcome.meetUrl;
+          link.textContent = 'Google Meet';
+          els.meet.replaceChildren(link);
+        } else {
+          els.meet.replaceChildren('Google Meet');
+        }
+        showStep('confirmed');
+        return;
+      }
+
+      if (response.status === 409) {
+        forgetSlot(slot);
+        showFormError(result.error ?? 'Sorry, that time has just gone. Please choose another.');
+        return;
+      }
+
+      if (response.status === 400 && result.fields) {
+        const fieldInputs: Record<string, HTMLInputElement> = {
+          name: $('#talk-name'),
+          email: $('#talk-email'),
+        };
+        let first: HTMLInputElement | undefined;
+        for (const [name, message] of Object.entries(result.fields as Record<string, string>)) {
+          const input = fieldInputs[name];
+          if (input) {
+            setFieldError(input, message);
+            first ??= input;
+          } else {
+            showFormError(message);
+          }
+        }
+        first?.focus();
+        return;
+      }
+
+      showFormError("Something went wrong and the time wasn't booked. Please try again.", { email: true });
+    } catch {
+      showFormError("Something went wrong and the time wasn't booked. Please try again.", { email: true });
+    } finally {
+      submitting = false;
+      setBooking(false);
+    }
+  });
+
+  /** If times can't be loaded, say so where they would be and offer email. */
+  function showLoadError() {
+    els.times.hidden = false;
+    els.timesDate.textContent = "Times couldn't be loaded";
+    els.noTimes.hidden = false;
+    els.timeList.replaceChildren();
+    els.continue.hidden = true;
+  }
+
+  renderCalendar();
+
+  loadAvailability().then(
+    () => {
+      loaded = true;
+      // Open on the first bookable day, so there are always times beside the
+      // calendar. If this month has nothing left, start on the month that does.
+      const firstDay = slotsByDay.keys().next().value;
+      if (firstDay) {
+        const [year, month] = firstDay.split('-').map(Number);
+        viewYear = year;
+        viewMonth = month - 1;
+      }
+      renderCalendar();
+      selectDay(firstDayInView(), { scroll: false });
+    },
+    (error) => {
+      console.error(error);
+      showLoadError();
+    },
+  );
+</script>
+
+<style is:global>
+  /* Global so the calendar cells and time buttons built in the script are
+     styled too. Every rule is scoped under .talk, so nothing leaks. */
+  .talk [hidden] {
+    display: none !important;
+  }
+
+  .talk h1:focus {
+    outline: none;
+  }
+
+  .talk .intro {
+    max-width: var(--measure);
+    margin-bottom: 3.5rem;
+  }
+
+  .talk .timezone {
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--rule);
+    font-size: 0.875rem;
+    color: var(--muted);
+  }
+
+  .talk .booking {
+    padding-top: 2rem;
+  }
+
+  /* page.css styles every h2 as a small uppercase section label. These two
+     are headings for structure but read as plain bold text. */
+  .talk .month-name,
+  .talk .times-date {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    color: var(--ink);
+    text-transform: none;
+    letter-spacing: -0.01em;
+    font-weight: 600;
+  }
+
+  .talk .month {
+    display: grid;
+    grid-template-columns: 2.75rem 1fr 2.75rem;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .talk .month-name {
+    font-size: 1.125rem;
+    text-align: center;
+  }
+
+  .talk .month-arrow {
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .talk .month-arrow:disabled {
+    color: var(--rule);
+    cursor: default;
+  }
+
+  .talk .grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .talk .weekdays {
+    margin-bottom: 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  .talk .days {
+    row-gap: 0.5rem;
+  }
+
+  .talk .day {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 2.75rem;
+    aspect-ratio: 1;
+    margin: 0 auto;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.9375rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .talk .day.past {
+    color: var(--muted);
+    opacity: 0.55;
+  }
+
+  /* The one visual rule: a circle means there is a time to book. */
+  .talk .day.available {
+    border-color: var(--muted);
+    cursor: pointer;
+  }
+
+  .talk .day.available:hover {
+    border-color: var(--ink);
+  }
+
+  .talk .day[aria-pressed='true'],
+  .talk .time[aria-pressed='true'] {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+  }
+
+  .talk .times-date {
+    margin-bottom: 1.25rem;
+    font-size: 1rem;
+  }
+
+  .talk .no-times {
+    font-size: 0.9375rem;
+    color: var(--muted);
+  }
+
+  .talk .time-list {
+    display: grid;
+    gap: 0.625rem;
+  }
+
+  .talk .time {
+    min-height: 2.75rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--muted);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.9375rem;
+    font-variant-numeric: tabular-nums;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .talk .time:hover {
+    border-color: var(--ink);
+  }
+
+  .talk .button {
+    min-height: 2.75rem;
+    padding: 0.625rem 1.375rem;
+    border: 1px solid var(--ink);
+    border-radius: 4px;
+    background: var(--ink);
+    color: var(--paper);
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .talk .button:hover {
+    opacity: 0.85;
+  }
+
+  .talk .continue {
+    width: 100%;
+    margin-top: 1.5rem;
+  }
+
+  .talk .text-button {
+    min-height: 2.75rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.9375rem;
+    text-decoration: underline;
+    text-decoration-color: var(--rule);
+    text-underline-offset: 0.3em;
+    cursor: pointer;
+  }
+
+  .talk .text-button:hover {
+    color: var(--ink);
+    text-decoration-color: var(--ink);
+  }
+
+  .talk button:focus-visible,
+  .talk input:focus-visible,
+  .talk textarea:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  /* Details and confirmation */
+  /* The same text column as the nav and footer, which are --measure wide
+     including 1.5rem of padding each side, so the edges line up. */
+  .talk .narrow {
+    max-width: calc(var(--measure) - 3rem);
+    margin-inline: auto;
+  }
+
+  .talk .summary {
+    margin: 1.5rem 0;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .talk .summary p {
+    font-size: 1.0625rem;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  .talk .summary .secondary {
+    font-weight: 400;
+    color: var(--muted);
+  }
+
+  .talk .details {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .talk .field label {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+  }
+
+  /* Boxed, so it is obvious where to click and type. */
+  .talk input,
+  .talk textarea {
+    display: block;
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.75rem 0.875rem;
+    border: 1px solid var(--muted);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    line-height: 1.4;
+  }
+
+  .talk textarea {
+    min-height: 7rem;
+    resize: vertical;
+  }
+
+  .talk input::placeholder,
+  .talk textarea::placeholder {
+    color: var(--muted);
+    opacity: 0.8;
+  }
+
+  .talk input:focus,
+  .talk textarea:focus,
+  .talk input[aria-invalid] {
+    border-color: var(--ink);
+  }
+
+  .talk .error {
+    margin-top: 0.375rem;
+    font-size: 0.875rem;
+  }
+
+  .talk .button:disabled {
+    opacity: 0.6;
+    cursor: progress;
+  }
+
+  .talk .honeypot {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .talk .actions {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .talk .book {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 3.25rem;
+  }
+
+  .talk .actions .text-button {
+    justify-self: center;
+  }
+
+  .talk .note {
+    color: var(--muted);
+  }
+
+  .talk .home {
+    margin-top: 1.5rem;
+  }
+
+  /* Stacked: calendar, then times underneath, each a full-width column. */
+  @media (max-width: 47.99rem) {
+    .talk .times {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+
+    .talk .time-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .talk .time {
+      text-align: center;
+    }
+  }
+
+  @media (max-width: 34rem) {
+    .talk .intro {
+      margin-bottom: 2.5rem;
+    }
+
+    .talk .days {
+      row-gap: 0.25rem;
+    }
+  }
+
+  /* Side by side. Widened here only, the same way the About page does it. */
+  @media (min-width: 48rem) {
+    main.talk {
+      max-width: 52rem;
+    }
+
+    /* The times column is always reserved, so the calendar keeps one width
+       whether or not a date has been picked. */
+    .talk .booking {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 12rem;
+      gap: 2.5rem;
+    }
+
+    .talk .times {
+      padding-left: 2rem;
+      border-left: 1px solid var(--rule);
+    }
+  }
+</style>

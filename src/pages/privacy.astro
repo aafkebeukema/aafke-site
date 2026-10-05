@@ -1,0 +1,127 @@
+---
+import Layout from '../layouts/Layout.astro';
+import '../styles/page.css';
+
+// Describes only what the booking system actually does. If it changes, so
+// must this page.
+const contact = 'aafkedailycalendar@gmail.com';
+---
+
+<Layout
+  title="Privacy | Aafke Beukema"
+  description="How the booking page at aafke.co.uk uses your information."
+>
+  <main>
+    <header class="masthead">
+      <h1>Privacy</h1>
+      <p class="tagline">
+        How I use the information you give me when you book a chat through
+        this website.
+      </p>
+      <p class="updated">Last updated 5 October 2026</p>
+    </header>
+
+    <section aria-labelledby="collect">
+      <h2 id="collect">What I collect</h2>
+      <p>When you book a chat at <a href="/talktome">aafke.co.uk/talktome</a>, the form asks for:</p>
+      <ul>
+        <li>your name</li>
+        <li>your email address</li>
+        <li>your phone number, if you choose to give it</li>
+        <li>what you'd like to chat about, if you choose to say</li>
+      </ul>
+      <p class="spaced">
+        That's the minimum needed to arrange the meeting. The site has no
+        accounts, and doesn't use analytics or advertising.
+      </p>
+    </section>
+
+    <section aria-labelledby="use">
+      <h2 id="use">How I use it</h2>
+      <p>
+        Only to arrange and manage the meeting you asked for: to send you a
+        calendar invitation, set up the Google Meet, and get in touch about the
+        meeting if I need to. Your information is never sold, and never used
+        for advertising or marketing.
+      </p>
+    </section>
+
+    <section aria-labelledby="stored">
+      <h2 id="stored">Where it's stored</h2>
+      <p>
+        Bookings are made in my Google Calendar. When you book, the calendar
+        event for your chosen time is updated with your details, you're added
+        as a guest, and a Google Meet is created for it. Google then emails you
+        the invitation.
+      </p>
+      <p class="spaced">
+        Your booking details are stored in Google Calendar, not in a separate
+        database on this website. Google handles them as described in
+        <a href="https://policies.google.com/privacy">Google's Privacy Policy</a>.
+      </p>
+    </section>
+
+    <section aria-labelledby="cancel">
+      <h2 id="cancel">Cancelling</h2>
+      <p>
+        Your booking includes a cancellation link. It contains a random code,
+        and a copy of that code is stored privately on the calendar event, so
+        only someone with your link can cancel the booking.
+      </p>
+      <p class="spaced">
+        When you cancel, your name, email address, phone number, message, the
+        Google Meet and the cancellation code are all removed from the event,
+        and the time becomes available to book again.
+      </p>
+    </section>
+
+    <section aria-labelledby="google">
+      <h2 id="google">Google Calendar access</h2>
+      <p>
+        The booking system connects only to my own Google Calendar. It reads it
+        to find the times I've marked as available, and edits those events to
+        make and cancel bookings. It never accesses your Google account.
+      </p>
+      <p class="spaced">
+        Its use of information received from Google APIs adheres to the
+        <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>,
+        including the Limited Use requirements.
+      </p>
+    </section>
+
+    <section aria-labelledby="technical">
+      <h2 id="technical">Visiting the website</h2>
+      <p>
+        This website is hosted by a web hosting provider and loads its fonts
+        from Google Fonts. When you visit, your browser connects to those
+        services, which can see technical information such as your IP address.
+      </p>
+    </section>
+
+    <section aria-labelledby="questions">
+      <h2 id="questions">Questions</h2>
+      <p>
+        If you have any questions about your information, including asking to
+        see it or have it removed, email
+        <a href={`mailto:${contact}`}>{contact}</a>.
+      </p>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  .updated {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: var(--muted);
+  }
+
+  ul {
+    margin: 0.75rem 0 0;
+    padding-left: 1.25rem;
+  }
+
+  li + li {
+    margin-top: 0.25rem;
+  }
+</style>

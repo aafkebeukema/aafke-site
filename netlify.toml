@@ -1,0 +1,18 @@
+# Netlify deploys the talktome branch for testing. GitHub Pages still serves
+# main and ignores this file.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Each function sets its own route (/api/...) in its config export.
+[functions]
+  directory = "netlify/functions"
+
+# The cancellation page's URL carries a secret token. Don't send it to other
+# sites as a referrer, and keep the page out of search and caches.
+[[headers]]
+  for = "/talktome/cancel*"
+  [headers.values]
+    Referrer-Policy = "no-referrer"
+    X-Robots-Tag = "noindex, nofollow"
+    Cache-Control = "no-store"
