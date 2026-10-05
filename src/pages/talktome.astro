@@ -514,6 +514,39 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     }
   });
 
+  // While availability loads, faint rings drift across the dates as if the
+  // calendar were checking them. They are only styling on plain, unclickable
+  // cells, never the real circles or the filled selected state.
+  const SCAN_EVERY_MS = 320;
+  const MAX_RINGS = 4;
+  let scanTimer: number | undefined;
+
+  function startScanning() {
+    if (!prefersMotion()) {
+      els.days.classList.add('is-waiting');
+      return;
+    }
+    els.days.classList.add('is-scanning');
+    const step = () => {
+      const lit = [...els.days.querySelectorAll<HTMLElement>('.ring')];
+      lit.forEach((cell) => Math.random() < 0.6 && cell.classList.remove('ring'));
+      // Today onwards only: past dates are never bookable, so never checked.
+      const dates = [...els.days.querySelectorAll<HTMLElement>('.day:not(.past):not(.ring)')];
+      const room = MAX_RINGS - els.days.querySelectorAll('.ring').length;
+      for (let i = Math.min(room, 1 + Math.floor(Math.random() * 2)); i > 0 && dates.length; i--) {
+        dates.splice(Math.floor(Math.random() * dates.length), 1)[0].classList.add('ring');
+      }
+    };
+    step();
+    scanTimer = window.setInterval(step, SCAN_EVERY_MS);
+  }
+
+  function stopScanning() {
+    window.clearInterval(scanTimer);
+    els.days.classList.remove('is-scanning', 'is-waiting');
+    els.days.querySelectorAll('.ring').forEach((cell) => cell.classList.remove('ring'));
+  }
+
   /** If times can't be loaded, say so where they would be and offer email. */
   function showLoadError() {
     els.times.hidden = false;
@@ -527,9 +560,14 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   // until it answers, so "No times" only ever shows after a real answer.
   const availabilityLoaded = loadAvailability();
   renderCalendar();
+  startScanning();
 
   availabilityLoaded
-    .finally(() => els.booking.setAttribute('aria-busy', 'false'))
+    .finally(() => {
+      // Stop the moment there's an answer, before the real circles go in.
+      stopScanning();
+      els.booking.setAttribute('aria-busy', 'false');
+    })
     .then(
       () => {
         loaded = true;
@@ -657,6 +695,20 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     font: inherit;
     font-size: 0.9375rem;
     font-variant-numeric: tabular-nums;
+  }
+
+  /* Loading: faint rings fade in and out on a few dates at a time. */
+  .talk .days.is-scanning .day {
+    transition: border-color 0.6s ease;
+  }
+
+  .talk .days.is-scanning .day.ring {
+    border-color: color-mix(in srgb, var(--muted) 45%, var(--paper));
+  }
+
+  /* Reduced motion: the dates simply rest a little lighter until they load. */
+  .talk .days.is-waiting .day:not(.past) {
+    opacity: 0.55;
   }
 
   .talk .day.past {
