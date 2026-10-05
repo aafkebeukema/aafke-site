@@ -74,7 +74,7 @@ test("uses each event's own end time rather than a fixed length", () => {
   assert.equal(slot.end, '2026-10-07T10:00:00.000Z');
 });
 
-test('swaps the refresh token for an access token, then asks for six whole months of single events', async () => {
+test('swaps the refresh token for an access token, then asks for five whole months of single events', async () => {
   const google = fakeGoogle([{ items: [timed('a', '2026-10-07T09:30:00Z', '2026-10-07T09:55:00Z')] }]);
   const slots = await listBookableSlots(readConfig(env), { fetch: google.fetch, now });
 
@@ -91,8 +91,8 @@ test('swaps the refresh token for an access token, then asks for six whole month
   assert.equal(new Headers(events.init?.headers).get('authorization'), 'Bearer access-token');
   const query = events.url.searchParams;
   assert.equal(query.get('timeMin'), '2026-10-05T12:00:00.000Z');
-  // 5 October 2026: October to March inclusive, ending on 1 April.
-  assert.equal(query.get('timeMax'), '2027-04-01T00:00:00.000Z');
+  // 5 October 2026: October to February inclusive, ending on 1 March.
+  assert.equal(query.get('timeMax'), '2027-03-01T00:00:00.000Z');
   assert.equal(query.get('singleEvents'), 'true');
   assert.equal(query.get('q'), 'Bookable time');
 
@@ -195,10 +195,11 @@ test('gets a fresh token and retries once if Google rejects the cached one', asy
   assert.deepEqual(slots.map((slot) => slot.id), ['a']);
 });
 
-test('the window always ends on the first of a month, six months on', () => {
-  assert.equal(windowEnd(new Date('2026-10-05T12:00:00Z')).toISOString(), '2027-04-01T00:00:00.000Z');
-  assert.equal(windowEnd(new Date('2026-10-31T23:59:00Z')).toISOString(), '2027-04-01T00:00:00.000Z');
-  assert.equal(windowEnd(new Date('2026-12-15T09:00:00Z')).toISOString(), '2027-06-01T00:00:00.000Z');
+test('the window always ends on the first of a month, five months on', () => {
+  assert.equal(windowEnd(new Date('2026-10-05T12:00:00Z')).toISOString(), '2027-03-01T00:00:00.000Z');
+  assert.equal(windowEnd(new Date('2026-10-31T23:59:00Z')).toISOString(), '2027-03-01T00:00:00.000Z');
+  // It rolls on by itself: from 1 November, March is included.
+  assert.equal(windowEnd(new Date('2026-11-01T00:00:00Z')).toISOString(), '2027-04-01T00:00:00.000Z');
 });
 
 test('includes January 2027 slots that the old 90-day window cut off', async () => {

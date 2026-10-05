@@ -11,8 +11,8 @@ import type { AvailableSlot } from '../../src/data/talk-availability.ts';
 /** Only events with exactly this title are offered as bookable. */
 export const BOOKABLE_TITLE = 'Bookable time';
 
-/** How far ahead to look: this calendar month and the next five. */
-export const BOOKING_MONTHS = 6;
+/** How far ahead to look: this calendar month and the next four. */
+export const BOOKING_MONTHS = 5;
 
 /**
  * Where the availability window ends: the start of the month after the last

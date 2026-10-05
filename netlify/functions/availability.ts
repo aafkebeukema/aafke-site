@@ -1,6 +1,6 @@
 /**
  * GET /api/availability: the bookable slots for /talktome, read from the
- * "Bookable time" events in Google Calendar, this month and the next five.
+ * "Bookable time" events in Google Calendar, this month and the next four.
  */
 import type { Availability } from '../../src/data/talk-availability.ts';
 import { listBookableSlots, readConfig, type Timings, windowEnd } from '../lib/google-calendar.ts';
