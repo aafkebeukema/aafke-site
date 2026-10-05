@@ -166,12 +166,9 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   const pad = (n: number) => String(n).padStart(2, '0');
 
-  /** UK style: 9:30am, 2pm, midday. The minutes are dropped on the hour. */
+  /** UK style: 9:30am, 12pm, 2pm. The minutes are dropped on the hour. */
   function clockTime(moment: Date) {
     const parts = Object.fromEntries(zoneClock.formatToParts(moment).map((p) => [p.type, p.value]));
-    if (parts.hour === '12' && parts.minute === '00') {
-      return parts.dayPeriod.toLowerCase() === 'pm' ? 'midday' : 'midnight';
-    }
     const minutes = parts.minute === '00' ? '' : `:${parts.minute}`;
     return `${parts.hour}${minutes}${parts.dayPeriod.toLowerCase()}`;
   }
