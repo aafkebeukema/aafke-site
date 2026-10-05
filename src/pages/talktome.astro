@@ -285,7 +285,6 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     if (!loaded) return;
     const slots = (selectedDay && slotsByDay.get(selectedDay)) || [];
     els.times.hidden = false;
-    els.times.classList.remove('is-loading');
     els.timesDate.textContent = slots.length
       ? zoneLongDate.format(slots[0].start)
       : 'No times this month';
@@ -518,19 +517,15 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   /** If times can't be loaded, say so where they would be and offer email. */
   function showLoadError() {
     els.times.hidden = false;
-    els.times.classList.remove('is-loading');
     els.timesDate.textContent = "Times couldn't be loaded";
     els.noTimes.hidden = false;
     els.timeList.replaceChildren();
     els.continue.hidden = true;
   }
 
-  // Start the request before anything else, then say it's on its way where
-  // the times will appear. "No times" only ever shows after a real answer.
+  // Start the request before anything else. The times column stays empty
+  // until it answers, so "No times" only ever shows after a real answer.
   const availabilityLoaded = loadAvailability();
-  els.times.hidden = false;
-  els.times.classList.add('is-loading');
-  els.timesDate.textContent = 'Loading available times…';
   renderCalendar();
 
   availabilityLoaded
@@ -693,11 +688,6 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   .talk .no-times {
     font-size: 0.9375rem;
-    color: var(--muted);
-  }
-
-  .talk .times.is-loading .times-date {
-    font-weight: 400;
     color: var(--muted);
   }
 
