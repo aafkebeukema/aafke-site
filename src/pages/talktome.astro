@@ -44,7 +44,10 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
             <a href="mailto:hello@aafke.co.uk">Email me to book some time</a>
           </p>
           <div class="time-list" role="group" aria-label="Choose a time" data-time-list></div>
-          <button type="button" class="button continue" data-continue hidden>Continue</button>
+          <button type="button" class="button continue" data-continue hidden>
+            <span>Continue</span>
+            <span aria-hidden="true">→</span>
+          </button>
         </div>
       </div>
 
@@ -817,6 +820,10 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   }
 
   .talk .continue {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
     width: 100%;
     margin-top: 1.5rem;
   }
@@ -1007,6 +1014,13 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     .talk .times {
       padding-left: 2rem;
       border-left: 1px solid var(--rule);
+    }
+
+    /* Like "Book this time": label lined up with the time labels above it,
+       arrow at the far end. */
+    .talk .continue {
+      justify-content: space-between;
+      padding-inline: 1rem;
     }
   }
 </style>
