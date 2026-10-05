@@ -54,15 +54,28 @@ import '../styles/page.css';
         Tell me what's taking up your time and I'll tell you whether I can help.
         No charge for that conversation.
       </p>
-      <p class="spaced">
+      <p class="spaced contact-ways">
         <a class="cta" href="mailto:hello@aafke.co.uk">hello@aafke.co.uk</a>
+        <span class="or">or</span>
+        <a class="cta" href="/talktome">book a time to talk</a>
       </p>
-      <p class="spaced">Or <a href="/talktome">book a time to talk</a>.</p>
     </section>
   </main>
 </Layout>
 
 <style>
+  /* Email and booking as two equal choices on one line, wrapping on a phone. */
+  .contact-ways {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 0.875rem;
+  }
+
+  .contact-ways .or {
+    color: var(--muted);
+  }
+
   .trades {
     margin: 1rem 0 0;
     padding: 0;
