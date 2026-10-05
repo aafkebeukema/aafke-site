@@ -39,6 +39,7 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
         <div class="times" data-times hidden>
           <h2 class="times-date" data-times-date></h2>
+          <p class="time-hint" data-time-hint hidden>Choose a time to continue</p>
           <p class="no-times" data-no-times hidden>
             <a href="mailto:hello@aafke.co.uk">Email me to book some time</a>
           </p>
@@ -228,6 +229,7 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     timesDate: $('[data-times-date]'),
     timeList: $('[data-time-list]'),
     noTimes: $('[data-no-times]'),
+    timeHint: $('[data-time-hint]'),
     continue: $<HTMLButtonElement>('[data-continue]'),
     form: $<HTMLFormElement>('[data-form]'),
     formError: $('[data-form-error]'),
@@ -306,6 +308,7 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
       ? zoneLongDate.format(slots[0].start)
       : 'No times this month';
     els.noTimes.hidden = slots.length > 0;
+    els.timeHint.hidden = slots.length === 0;
     els.timeList.replaceChildren(
       ...slots.map((slot) => {
         const button = document.createElement('button');
@@ -568,6 +571,7 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   function showLoadError() {
     els.times.hidden = false;
     els.timesDate.textContent = "Times couldn't be loaded";
+    els.timeHint.hidden = true;
     els.noTimes.hidden = false;
     els.timeList.replaceChildren();
     els.continue.hidden = true;
@@ -758,6 +762,13 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   .talk .times-date {
     margin-bottom: 1.25rem;
     font-size: 1rem;
+  }
+
+  /* Sits tucked under the date heading, above the time buttons. */
+  .talk .time-hint {
+    margin: -0.875rem 0 1rem;
+    font-size: 0.875rem;
+    color: var(--muted);
   }
 
   .talk .no-times {
