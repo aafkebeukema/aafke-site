@@ -1,0 +1,9 @@
+# Netlify deploys the talktome branch for testing. GitHub Pages still serves
+# main and ignores this file.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# The function sets its own route (/api/availability) in its config export.
+[functions]
+  directory = "netlify/functions"

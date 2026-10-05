@@ -39,3 +39,27 @@ export const mockSlots: string[] = [
   '2026-11-20T11:30:00Z',
   '2026-11-20T15:30:00Z',
 ];
+
+/** One bookable slot, as GET /api/availability returns it. ISO 8601, in UTC. */
+export interface AvailableSlot {
+  start: string;
+  end: string;
+}
+
+/** The body of GET /api/availability. */
+export interface Availability {
+  durationMinutes: number;
+  slots: AvailableSlot[];
+}
+
+/** The mocked slots in the API's shape. Google Calendar replaces this later. */
+export function mockAvailability(): Availability {
+  return {
+    durationMinutes: MEETING_MINUTES,
+    slots: mockSlots.map((iso) => {
+      const start = new Date(iso);
+      const end = new Date(start.getTime() + MEETING_MINUTES * 60_000);
+      return { start: start.toISOString(), end: end.toISOString() };
+    }),
+  };
+}
