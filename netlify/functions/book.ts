@@ -40,7 +40,9 @@ export default async function book(request: Request): Promise<Response> {
   }
 
   try {
-    return reply(200, await bookSlot(readConfig(process.env), checked.booking));
+    // The cancellation link points back at whichever site took the booking.
+    const origin = new URL(request.url).origin;
+    return reply(200, await bookSlot(readConfig(process.env), checked.booking, origin));
   } catch (error) {
     if (error instanceof SlotUnavailableError) {
       return reply(409, { error: 'Sorry, that time has just gone. Please choose another.' });

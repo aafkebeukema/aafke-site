@@ -104,13 +104,25 @@ export function validateBooking(body: unknown): Validation {
 
 // ------------------------------------------------------------------- booking
 
-/** 256 bits, for the cancellation link that comes later. */
+/** 256 bits. A fresh one for every booking, so an old link never works again. */
 export const newCancelToken = () => randomBytes(32).toString('base64url');
 
-function description(booking: BookingRequest): string {
+/**
+ * The guest's cancellation link. It is a secret: anyone holding it can cancel,
+ * so it goes only into the event, never into a log. The origin is the site the
+ * booking came through, so branch deploys link to themselves.
+ */
+export function cancelUrl(origin: string, eventId: string, token: string): string {
+  const url = new URL('/talktome/cancel', origin);
+  url.search = new URLSearchParams({ eventId, token }).toString();
+  return url.href;
+}
+
+function description(booking: BookingRequest, cancelLink: string): string {
   const lines = [`Name: ${booking.name}`, `Email: ${booking.email}`];
   if (booking.phone) lines.push(`Phone: ${booking.phone}`);
   if (booking.note) lines.push('', 'What they would like to chat about:', booking.note);
+  lines.push('', `Need to cancel? ${cancelLink}`);
   lines.push('', 'Booked through aafke.co.uk/talktome');
   return lines.join('\n');
 }
@@ -134,6 +146,7 @@ const MEET_WAIT_MS = 700;
 export async function bookSlot(
   config: GoogleConfig,
   booking: BookingRequest,
+  origin: string,
   {
     fetch: fetchImpl = fetch,
     now = new Date(),
@@ -174,7 +187,7 @@ export async function bookSlot(
     },
     body: JSON.stringify({
       summary: bookedTitle(booking.name),
-      description: description(booking),
+      description: description(booking, cancelUrl(origin, booking.slotId, cancelToken)),
       attendees: [...(event.attendees ?? []), { email: booking.email, displayName: booking.name }],
       conferenceData: {
         createRequest: { requestId: randomUUID(), conferenceSolutionKey: { type: 'hangoutsMeet' } },

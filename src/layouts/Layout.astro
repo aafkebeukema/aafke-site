@@ -8,6 +8,8 @@ interface Props {
   noindex?: boolean;
   /** Bespoke prospect pages stay focused: no nav, no footer links. */
   chrome?: boolean;
+  /** A referrer policy, for pages whose URL holds a secret. */
+  referrer?: string;
 }
 
 const {
@@ -15,6 +17,7 @@ const {
   description = 'I build custom AI automations and websites for small businesses.',
   noindex = false,
   chrome = true,
+  referrer,
 } = Astro.props;
 
 const canonicalUrl = Astro.url;
@@ -25,6 +28,7 @@ const canonicalUrl = Astro.url;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    {referrer && <meta name="referrer" content={referrer} />}
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalUrl} />

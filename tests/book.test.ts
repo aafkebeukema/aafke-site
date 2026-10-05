@@ -18,14 +18,19 @@ const inDays = (days: number, minutes = 0) =>
   new Date(Date.now() + days * 86_400_000 + minutes * 60_000).toISOString();
 
 const MEET = 'https://meet.google.com/abc-defg-hij';
+const ORIGIN = 'https://talktome--aafke-co-uk.netlify.app';
+
+// Fixed once, so every copy of the event has exactly the same times.
+const SLOT_START = inDays(2);
+const SLOT_END = inDays(2, 25);
 
 const bookableEvent = (overrides: object = {}) => ({
   id: 'slot123',
   etag: '"3181159875584000"',
   status: 'confirmed',
   summary: 'Bookable time',
-  start: { dateTime: inDays(2) },
-  end: { dateTime: inDays(2, 25) },
+  start: { dateTime: SLOT_START },
+  end: { dateTime: SLOT_END },
   ...overrides,
 });
 
@@ -135,7 +140,7 @@ test('the page sends company_fax and has no website field', async () => {
 
 test('turns the same event into the meeting, with attendee, Meet and invitation', async () => {
   const fake = fakeGoogle();
-  const result = await bookSlot(google, checked(), { fetch: fake.fetch, cancelToken: 'cancel-token' });
+  const result = await bookSlot(google, checked(), ORIGIN, { fetch: fake.fetch, cancelToken: 'cancel-token' });
 
   assert.deepEqual(result, { start: bookableEvent().start.dateTime, end: bookableEvent().end.dateTime, meetUrl: MEET });
 
@@ -165,11 +170,15 @@ test('turns the same event into the meeting, with attendee, Meet and invitation'
   for (const part of ['Name: Sam Smith', 'Email: sam@example.com', 'Phone: 07700 900123', 'Testing in small teams']) {
     assert.ok(body.description.includes(part), part);
   }
+  assert.ok(
+    body.description.includes(`Need to cancel? ${ORIGIN}/talktome/cancel?eventId=slot123&token=cancel-token`),
+    body.description,
+  );
 });
 
 test('leaves phone and note out of the description when not given', async () => {
   const fake = fakeGoogle();
-  await bookSlot(google, { slotId: 'slot123', name: 'Sam', email: 'sam@example.com' }, { fetch: fake.fetch });
+  await bookSlot(google, { slotId: 'slot123', name: 'Sam', email: 'sam@example.com' }, ORIGIN, { fetch: fake.fetch });
   const description: string = fake.calls[2].body.description;
   assert.ok(!description.includes('Phone:'));
   assert.ok(!description.includes('chat about'));
@@ -182,7 +191,7 @@ test('keeps existing attendees and private properties', async () => {
       extendedProperties: { private: { source: 'kept' } },
     }),
   });
-  await bookSlot(google, checked(), { fetch: fake.fetch, cancelToken: 't' });
+  await bookSlot(google, checked(), ORIGIN, { fetch: fake.fetch, cancelToken: 't' });
   const body = fake.calls[2].body;
   assert.deepEqual(body.attendees.map((a: { email: string }) => a.email), ['aafke@example.com', 'sam@example.com']);
   assert.deepEqual(body.extendedProperties.private, { source: 'kept', cancelToken: 't' });
@@ -192,7 +201,7 @@ test('generates a different high-entropy cancel token for each booking', async (
   const tokens = new Set<string>();
   for (let i = 0; i < 2; i++) {
     const fake = fakeGoogle();
-    await bookSlot(google, checked(), { fetch: fake.fetch });
+    await bookSlot(google, checked(), ORIGIN, { fetch: fake.fetch });
     tokens.add(fake.calls[2].body.extendedProperties.private.cancelToken);
   }
   assert.equal(tokens.size, 2);
@@ -212,7 +221,7 @@ test('waits for a Meet that Google is still creating', async () => {
     return fake.fetch(input, init);
   }) as typeof fetch;
 
-  const result = await bookSlot(google, checked(), { fetch: pendingThenReady, wait: async () => {} });
+  const result = await bookSlot(google, checked(), ORIGIN, { fetch: pendingThenReady, wait: async () => {} });
   assert.equal(result.meetUrl, MEET);
 });
 
@@ -222,7 +231,7 @@ test('still succeeds, without meetUrl, when the Meet is not ready after the retr
   const warn = console.warn;
   console.warn = () => {};
   try {
-    const result = await bookSlot(google, checked(), {
+    const result = await bookSlot(google, checked(), ORIGIN, {
       fetch: fake.fetch,
       wait: async (ms) => void waits.push(ms),
     });
@@ -247,7 +256,7 @@ test('still succeeds when re-reading the event for the Meet fails', async () => 
   const warn = console.warn;
   console.warn = () => {};
   try {
-    const result = await bookSlot(google, checked(), { fetch: flaky, wait: async () => {} });
+    const result = await bookSlot(google, checked(), ORIGIN, { fetch: flaky, wait: async () => {} });
     assert.ok(!('meetUrl' in result));
   } finally {
     console.warn = warn;
@@ -263,14 +272,14 @@ for (const [label, event] of [
 ] as const) {
   test(`refuses a slot that is ${label}, without changing it`, async () => {
     const fake = fakeGoogle({ event });
-    await assert.rejects(bookSlot(google, checked(), { fetch: fake.fetch }), SlotUnavailableError);
+    await assert.rejects(bookSlot(google, checked(), ORIGIN, { fetch: fake.fetch }), SlotUnavailableError);
     assert.ok(!fake.calls.some((call) => call.method === 'PATCH'));
   });
 }
 
 test('treats a changed event (412 from If-Match) as taken', async () => {
   const fake = fakeGoogle({ patch: () => new Response('Precondition Failed', { status: 412 }) });
-  await assert.rejects(bookSlot(google, checked(), { fetch: fake.fetch }), SlotUnavailableError);
+  await assert.rejects(bookSlot(google, checked(), ORIGIN, { fetch: fake.fetch }), SlotUnavailableError);
 });
 
 // ---------------------------------------------------------- the endpoint
@@ -301,6 +310,22 @@ const post = (body: unknown, headers: Record<string, string> = { 'content-type':
 
 test('is routed to /api/book', () => {
   assert.equal(config.path, '/api/book');
+});
+
+test('builds the cancellation link from the request origin, not a fixed URL', async () => {
+  const fake = useGoogle();
+  await book(
+    new Request('https://talktome--aafke-co-uk.netlify.app/api/book', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(form),
+    }),
+  );
+  const { description, extendedProperties } = fake.calls.find((call) => call.method === 'PATCH')!.body;
+  const token = extendedProperties.private.cancelToken;
+  assert.ok(
+    description.includes(`https://talktome--aafke-co-uk.netlify.app/talktome/cancel?eventId=slot123&token=${token}`),
+  );
 });
 
 test('books and returns only start, end and the Meet link', async () => {

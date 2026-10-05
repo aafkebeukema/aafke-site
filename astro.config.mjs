@@ -6,7 +6,8 @@ import { nonIndexablePaths } from './src/data/projects';
 
 // Public examples belong in the sitemap. Private prospect pitches do not, and
 // drafts are never built at all, so only the private ones need excluding here.
-const excluded = nonIndexablePaths();
+// The booking cancellation page only makes sense from its emailed link.
+const excluded = [...nonIndexablePaths(), '/talktome/cancel'];
 
 // https://astro.build/config
 export default defineConfig({

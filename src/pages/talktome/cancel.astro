@@ -1,0 +1,211 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import '../../styles/page.css';
+---
+
+<!--
+  Reached from the link in a booking. Opening it changes nothing: email
+  clients and link scanners open links on their own, so only pressing
+  "Cancel booking" sends the POST that cancels.
+-->
+<Layout
+  title="Cancel your chat | Aafke Beukema"
+  description="Cancel a chat booked with Aafke Beukema."
+  noindex
+  referrer="no-referrer"
+>
+  <main class="cancel">
+    <div data-state="confirm">
+      <p class="eyebrow">Talk to me</p>
+      <h1 tabindex="-1">Cancel this chat?</h1>
+      <p class="note">Google Calendar will let you know once it's cancelled.</p>
+
+      <form data-form>
+        <p class="error" role="alert" data-error hidden></p>
+        <div class="actions">
+          <button type="submit" class="button" data-cancel>
+            <span data-cancel-label>Cancel booking</span>
+          </button>
+          <a class="text-button" href="/">Keep booking</a>
+        </div>
+      </form>
+    </div>
+
+    <div data-state="cancelled" hidden>
+      <p class="eyebrow">Chat cancelled</p>
+      <h1 tabindex="-1">Your chat is cancelled</h1>
+      <p class="note">Google Calendar will send you an email to confirm.</p>
+      <p class="home"><a href="/talktome">Book another time</a></p>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  const root = document.querySelector<HTMLElement>('main.cancel')!;
+  const $ = <T extends HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
+  const form = $<HTMLFormElement>('[data-form]');
+  const error = $('[data-error]');
+  const button = $<HTMLButtonElement>('[data-cancel]');
+  const label = $('[data-cancel-label]');
+
+  const params = new URLSearchParams(window.location.search);
+  const eventId = params.get('eventId') ?? '';
+  const token = params.get('token') ?? '';
+
+  const INVALID = 'This cancellation link is invalid or has expired.';
+
+  function showError(message: string, { retry = false, email = false } = {}) {
+    error.replaceChildren(message);
+    if (email) {
+      const link = document.createElement('a');
+      link.href = 'mailto:hello@aafke.co.uk';
+      link.textContent = 'hello@aafke.co.uk';
+      error.append(' You can also email ', link, '.');
+    }
+    error.hidden = false;
+    // A dead link can't be retried, so there's nothing left to press.
+    button.hidden = !retry;
+  }
+
+  function setBusy(busy: boolean) {
+    button.disabled = busy;
+    button.setAttribute('aria-busy', String(busy));
+    label.textContent = busy ? 'Cancelling…' : 'Cancel booking';
+  }
+
+  if (!eventId || !token) showError(INVALID);
+
+  let submitting = false;
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (submitting || !eventId || !token) return;
+    submitting = true;
+    error.hidden = true;
+    setBusy(true);
+
+    try {
+      const response = await fetch('/api/cancel', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify({ eventId, token }),
+      });
+
+      // Only say it's cancelled once Google has restored the slot.
+      if (response.ok) {
+        root.querySelectorAll<HTMLElement>('[data-state]').forEach((state) => {
+          state.hidden = state.dataset.state !== 'cancelled';
+        });
+        root.querySelector<HTMLElement>('[data-state="cancelled"] h1')?.focus();
+        return;
+      }
+
+      const result = await response.json().catch(() => ({}));
+      if (response.status === 400) showError(result.error ?? INVALID);
+      else if (response.status === 409) {
+        showError(result.error ?? 'The booking changed just now. Please try again.', { retry: true });
+      }
+      else {
+        showError("Something went wrong and the booking wasn't cancelled. Please try again.", {
+          retry: true,
+          email: true,
+        });
+      }
+    } catch {
+      showError("Something went wrong and the booking wasn't cancelled. Please try again.", {
+        retry: true,
+        email: true,
+      });
+    } finally {
+      submitting = false;
+      setBusy(false);
+    }
+  });
+</script>
+
+<style>
+  /* The same text column, buttons and messages as the /talktome form. */
+  .cancel > div {
+    max-width: calc(var(--measure) - 3rem);
+    margin-inline: auto;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  h1:focus {
+    outline: none;
+  }
+
+  .note {
+    margin-top: 1.5rem;
+    color: var(--muted);
+  }
+
+  form {
+    margin-top: 2rem;
+  }
+
+  .error {
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+  }
+
+  .actions {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .button {
+    width: 100%;
+    min-height: 3.25rem;
+    padding: 0.625rem 1.375rem;
+    border: 1px solid var(--ink);
+    border-radius: 4px;
+    background: var(--ink);
+    color: var(--paper);
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .button:hover {
+    opacity: 0.85;
+  }
+
+  .button:disabled {
+    opacity: 0.6;
+    cursor: progress;
+  }
+
+  .text-button {
+    justify-self: center;
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    border-bottom: 0;
+    color: var(--muted);
+    font-size: 0.9375rem;
+    text-decoration: underline;
+    text-decoration-color: var(--rule);
+    text-underline-offset: 0.3em;
+  }
+
+  .text-button:hover {
+    color: var(--ink);
+    text-decoration-color: var(--ink);
+  }
+
+  .button:focus-visible,
+  .text-button:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  .home {
+    margin-top: 1.5rem;
+  }
+</style>
