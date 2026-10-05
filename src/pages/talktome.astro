@@ -101,9 +101,11 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
           <input id="talk-website" name="website" tabindex="-1" autocomplete="off" />
         </div>
 
+        <p class="error" role="alert" data-form-error hidden></p>
+
         <div class="actions">
-          <button type="submit" class="button book">
-            <span>Book this time</span>
+          <button type="submit" class="button book" data-book>
+            <span data-book-label>Book this time</span>
             <span aria-hidden="true">→</span>
           </button>
           <button type="button" class="text-button" data-back>Choose another time</button>
@@ -119,7 +121,7 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         <p data-summary-date></p>
         <p data-summary-time></p>
         <p class="secondary" data-summary-timezone></p>
-        <p class="secondary">Google Meet</p>
+        <p class="secondary" data-summary-meet>Google Meet</p>
       </div>
 
       <p class="note">A calendar invitation has been sent to your email.</p>
@@ -219,6 +221,10 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     noTimes: $('[data-no-times]'),
     continue: $<HTMLButtonElement>('[data-continue]'),
     form: $<HTMLFormElement>('[data-form]'),
+    formError: $('[data-form-error]'),
+    book: $<HTMLButtonElement>('[data-book]'),
+    bookLabel: $('[data-book-label]'),
+    meet: $('[data-summary-meet]'),
     back: $<HTMLButtonElement>('[data-back]'),
   };
 
@@ -348,6 +354,7 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   els.continue.addEventListener('click', () => {
     if (!selectedSlot) return;
     fillSummaries(selectedSlot);
+    els.formError.hidden = true;
     showStep('details');
   });
 
@@ -373,12 +380,16 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
       : invalid && !input.checkValidity()
         ? invalid
         : '';
+    setFieldError(input, message);
+    return !message;
+  }
+
+  function setFieldError(input: HTMLInputElement, message: string) {
     const error = root.querySelector<HTMLElement>(`#${input.id}-error`)!;
     error.textContent = message;
     error.hidden = !message;
     if (message) input.setAttribute('aria-invalid', 'true');
     else input.removeAttribute('aria-invalid');
-    return !message;
   }
 
   // Once a field has been flagged, clear the message as soon as it's fixed.
@@ -388,17 +399,111 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     });
   });
 
-  els.form.addEventListener('submit', (event) => {
+  /** A message above the buttons for problems that aren't about one field. */
+  function showFormError(message: string, { email = false } = {}) {
+    els.formError.replaceChildren(message);
+    if (email) {
+      const link = document.createElement('a');
+      link.href = 'mailto:hello@aafke.co.uk';
+      link.textContent = 'hello@aafke.co.uk';
+      els.formError.append(' ', 'You can also email ', link, '.');
+    }
+    els.formError.hidden = false;
+  }
+
+  /** The slot was taken while the form was open, so drop it from the calendar. */
+  function forgetSlot(slot: Slot) {
+    const day = dayKey(slot.start);
+    const left = (slotsByDay.get(day) ?? []).filter((other) => other !== slot);
+    if (left.length) slotsByDay.set(day, left);
+    else slotsByDay.delete(day);
+    renderCalendar();
+    selectDay(slotsByDay.has(day) ? day : firstDayInView(), { scroll: false });
+  }
+
+  function setBooking(busy: boolean) {
+    els.book.disabled = busy;
+    els.book.setAttribute('aria-busy', String(busy));
+    els.bookLabel.textContent = busy ? 'Booking…' : 'Book this time';
+  }
+
+  let submitting = false;
+
+  els.form.addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (submitting || !selectedSlot) return;
+    els.formError.hidden = true;
+
     // Check every field so all the messages show, then focus the first.
     const problems = required.filter((field) => !checkField(field));
     if (problems.length) {
       problems[0].input.focus();
       return;
     }
-    // Mocked: no request is made yet. When the backend exists it should
-    // quietly discard any submission with the honeypot `website` filled in.
-    showStep('confirmed');
+
+    const slot = selectedSlot;
+    const form = new FormData(els.form);
+    const value = (name: string) => String(form.get(name) ?? '');
+    submitting = true;
+    setBooking(true);
+
+    try {
+      const response = await fetch('/api/book', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify({
+          slotId: slot.id,
+          name: value('name'),
+          email: value('email'),
+          phone: value('phone'),
+          note: value('topic'),
+          website: value('website'),
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+
+      // Only confirm once Google has updated the event and made the Meet.
+      if (response.ok && result.meetUrl) {
+        const link = document.createElement('a');
+        link.href = result.meetUrl;
+        link.textContent = 'Google Meet';
+        els.meet.replaceChildren(link);
+        showStep('confirmed');
+        return;
+      }
+
+      if (response.status === 409) {
+        forgetSlot(slot);
+        showFormError(result.error ?? 'Sorry, that time has just gone. Please choose another.');
+        return;
+      }
+
+      if (response.status === 400 && result.fields) {
+        const fieldInputs: Record<string, HTMLInputElement> = {
+          name: $('#talk-name'),
+          email: $('#talk-email'),
+        };
+        let first: HTMLInputElement | undefined;
+        for (const [name, message] of Object.entries(result.fields as Record<string, string>)) {
+          const input = fieldInputs[name];
+          if (input) {
+            setFieldError(input, message);
+            first ??= input;
+          } else {
+            showFormError(message);
+          }
+        }
+        first?.focus();
+        return;
+      }
+
+      showFormError("Something went wrong and the time wasn't booked. Please try again.", { email: true });
+    } catch {
+      showFormError("Something went wrong and the time wasn't booked. Please try again.", { email: true });
+    } finally {
+      submitting = false;
+      setBooking(false);
+    }
   });
 
   /** If times can't be loaded, say so where they would be and offer email. */
@@ -716,6 +821,11 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   .talk .error {
     margin-top: 0.375rem;
     font-size: 0.875rem;
+  }
+
+  .talk .button:disabled {
+    opacity: 0.6;
+    cursor: progress;
   }
 
   .talk .honeypot {

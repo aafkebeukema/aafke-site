@@ -65,9 +65,14 @@ export interface CalendarEvent {
   end?: CalendarTime;
 }
 
-type Fetch = typeof fetch;
+export type Fetch = typeof fetch;
 
-async function accessToken(config: GoogleConfig, fetchImpl: Fetch): Promise<string> {
+/** The events collection URL for the configured calendar. */
+export function eventsUrl(config: GoogleConfig): string {
+  return `${CALENDAR_URL}/${encodeURIComponent(config.calendarId)}/events`;
+}
+
+export async function accessToken(config: GoogleConfig, fetchImpl: Fetch): Promise<string> {
   const response = await fetchImpl(TOKEN_URL, {
     method: 'POST',
     headers: { 'content-type': 'application/x-www-form-urlencoded' },
@@ -86,6 +91,17 @@ async function accessToken(config: GoogleConfig, fetchImpl: Fetch): Promise<stri
   return token;
 }
 
+/** Whether an event is still open to book: exact title, timed, not cancelled, in the future. */
+export function isBookable(event: CalendarEvent, now: Date): boolean {
+  const start = event.start?.dateTime;
+  return (
+    event.status !== 'cancelled' &&
+    event.summary === BOOKABLE_TITLE &&
+    Boolean(start && event.end?.dateTime) &&
+    Date.parse(start!) > now.getTime()
+  );
+}
+
 /**
  * Turns raw events into slots: exact title, timed (not all-day), not
  * cancelled, starting after now. Times come back as UTC ISO strings.
@@ -94,14 +110,11 @@ async function accessToken(config: GoogleConfig, fetchImpl: Fetch): Promise<stri
 export function toSlots(events: CalendarEvent[], now: Date): AvailableSlot[] {
   const slots: AvailableSlot[] = [];
   for (const event of events) {
-    const start = event.start?.dateTime;
-    const end = event.end?.dateTime;
-    if (event.status === 'cancelled' || event.summary !== BOOKABLE_TITLE || !start || !end) continue;
-    if (Date.parse(start) <= now.getTime()) continue;
+    if (!isBookable(event, now)) continue;
     slots.push({
       id: event.id,
-      start: new Date(start).toISOString(),
-      end: new Date(end).toISOString(),
+      start: new Date(event.start!.dateTime!).toISOString(),
+      end: new Date(event.end!.dateTime!).toISOString(),
     });
   }
   return slots.sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
@@ -130,10 +143,9 @@ export async function listBookableSlots(
     });
     if (pageToken) params.set('pageToken', pageToken);
 
-    const response = await fetchImpl(
-      `${CALENDAR_URL}/${encodeURIComponent(config.calendarId)}/events?${params}`,
-      { headers: { authorization: `Bearer ${token}` } },
-    );
+    const response = await fetchImpl(`${eventsUrl(config)}?${params}`, {
+      headers: { authorization: `Bearer ${token}` },
+    });
     if (!response.ok) {
       throw new GoogleCalendarError(
         `Calendar events request failed: ${response.status} ${await response.text()}`,
