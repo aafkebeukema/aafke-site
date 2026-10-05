@@ -856,9 +856,7 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     text-decoration-color: var(--ink);
   }
 
-  .talk button:focus-visible,
-  .talk input:focus-visible,
-  .talk textarea:focus-visible {
+  .talk button:focus-visible {
     outline: 2px solid var(--ink);
     outline-offset: 2px;
   }
@@ -926,10 +924,12 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     opacity: 0.8;
   }
 
+  /* A focused field shows itself by its border darkening, with no extra ring. */
   .talk input:focus,
   .talk textarea:focus,
   .talk input[aria-invalid] {
     border-color: var(--ink);
+    outline: none;
   }
 
   .talk .error {
