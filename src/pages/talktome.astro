@@ -534,8 +534,8 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   // While availability loads, faint rings drift across the dates as if the
   // calendar were checking them. They are only styling on plain, unclickable
   // cells, never the real circles or the filled selected state.
-  const SCAN_EVERY_MS = 140;
-  const MAX_RINGS = 9;
+  const SCAN_EVERY_MS = 100;
+  const MAX_RINGS = 12;
   let scanTimer: number | undefined;
 
   function startScanning() {
@@ -546,11 +546,11 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     els.days.classList.add('is-scanning');
     const step = () => {
       const lit = [...els.days.querySelectorAll<HTMLElement>('.ring')];
-      lit.forEach((cell) => Math.random() < 0.75 && cell.classList.remove('ring'));
+      lit.forEach((cell) => Math.random() < 0.5 && cell.classList.remove('ring'));
       // Today onwards only: past dates are never bookable, so never checked.
       const dates = [...els.days.querySelectorAll<HTMLElement>('.day:not(.past):not(.blank):not(.ring)')];
       const room = MAX_RINGS - els.days.querySelectorAll('.ring').length;
-      for (let i = Math.min(room, 2 + Math.floor(Math.random() * 3)); i > 0 && dates.length; i--) {
+      for (let i = Math.min(room, 3 + Math.floor(Math.random() * 3)); i > 0 && dates.length; i--) {
         dates.splice(Math.floor(Math.random() * dates.length), 1)[0].classList.add('ring');
       }
     };
@@ -716,11 +716,12 @@ const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   /* Loading: faint rings fade in and out on a few dates at a time. */
   .talk .days.is-scanning .day {
-    transition: border-color 0.2s ease;
+    transition: border-color 0.12s ease;
   }
 
   .talk .days.is-scanning .day.ring {
-    border-color: color-mix(in srgb, var(--muted) 45%, var(--paper));
+    /* Clearly visible, but still lighter than a real available date. */
+    border-color: color-mix(in srgb, var(--muted) 70%, var(--paper));
   }
 
   /* Reduced motion: the dates simply rest a little lighter until they load. */
