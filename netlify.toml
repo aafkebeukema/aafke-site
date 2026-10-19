@@ -1,5 +1,4 @@
-# Netlify deploys the talktome branch for testing. GitHub Pages still serves
-# main and ignores this file.
+# Netlify builds main and serves aafke.co.uk, including the /api functions.
 [build]
   command = "npm run build"
   publish = "dist"
