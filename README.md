@@ -62,6 +62,38 @@ curl -sSI https://aafke.co.uk | head -1
 ```
 
 
+## Monitoring /talktome
+
+An UptimeRobot **Keyword** monitor checks `https://aafke.co.uk/api/availability`
+every 60 minutes and emails when the keyword `"start"` (with the quotes) is
+missing.
+
+`"start"` only appears inside a slot (`{"slots":[{"id":…,"start":…,"end":…}],"until":…}`),
+so it's there only when at least one time can be booked. Any failure talking to
+Google returns a 502 with `{"error":…}`, and a calendar with no bookable times
+returns `{"slots":[]}`. Neither contains `"start"`, so both raise an alert.
+
+An alert probably means one of these:
+
+- **The Google refresh token is dead** (most likely). The Netlify function log
+  for `availability` shows `Token request failed: 400 … invalid_grant`. Mint a
+  new token in the [OAuth Playground](https://developers.google.com/oauthplayground)
+  (own credentials, scope `https://www.googleapis.com/auth/calendar.events`,
+  signed in as the calendar owner), put it in Netlify's `GOOGLE_REFRESH_TOKEN`,
+  and redeploy. Tokens die if the Google Cloud app (project `aafke-booking`) is
+  back in "Testing" (7-day expiry), the account password changes, or access is
+  removed.
+- **A Netlify environment variable is missing or wrong.** The log says
+  `Missing environment variables: …`, or Google rejects the client. Check
+  `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` and
+  `GOOGLE_CALENDAR_ID`, and redeploy after any change.
+- **There are no bookable times.** The endpoint returns 200 with no slots. Add
+  more "Bookable time" events (the title must match exactly) within this month
+  and the next four.
+
+The monitor only covers reading availability. A broken `/api/book` (e.g. a token
+without write access) won't trigger it.
+
 ## Structure
 
 - `src/pages/` — one file per route
