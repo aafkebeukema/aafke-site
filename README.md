@@ -1,66 +1,73 @@
 # aafke.co.uk
 
-Static site built with [Astro](https://astro.build), hosted on GitHub Pages.
+Site built with [Astro](https://astro.build), hosted on Netlify. Pages are
+static; the /talktome booking API runs as Netlify Functions.
 
 ## Local development
 
 ```bash
 npm install
-npm run dev      # http://localhost:4321
+npm run dev      # http://localhost:4321 (pages only, no /api routes)
 npm run build    # outputs to dist/
 npm run preview  # serve the built site locally
+npm test         # unit tests in tests/
+netlify dev      # pages plus the /api functions (needs the Netlify CLI)
 ```
+
+`netlify dev` only reaches Google if the `GOOGLE_*` variables have values in
+Netlify's "Local development" context; they're empty by default.
 
 ## Deployment
 
-Pushing to `main` triggers `.github/workflows/deploy.yml`, which builds the site
-and publishes it to GitHub Pages. No manual step needed.
+Netlify builds `main` and publishes it to aafke.co.uk; `netlify.toml` sets the
+build (`npm run build`, publish `dist/`) and the functions directory. Pushing to
+`main` is all it takes. Other branches with a Netlify branch deploy (e.g.
+`talktome`) get their own preview URL.
+
+A commit message containing `[skip ci]` skips the Netlify build too. Use
+`[skip actions]` to skip only GitHub Actions.
+
+### Functions
+
+`netlify/functions/` holds one file per route, each declaring its own path:
+
+- `GET /api/availability`: bookable slots from Google Calendar
+- `POST /api/book`: books a slot and creates the Meet link
+- `POST /api/cancel`: cancels a booking from the link in its confirmation
+
+They read these Netlify environment variables (Site configuration ->
+Environment variables), and pick up changes only after a redeploy:
+
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: the OAuth client in Google Cloud
+  project `aafke-booking`
+- `GOOGLE_REFRESH_TOKEN`: lets the functions act on the calendar
+- `GOOGLE_CALENDAR_ID`: the calendar holding the "Bookable time" events
+- `BOOKING_NOTIFY_EMAIL` (optional): added as a hidden guest on every booking
+
+### Leftover GitHub Pages workflow
+
+`.github/workflows/deploy.yml` still builds `main` and publishes it to GitHub
+Pages on every push, and `public/CNAME` still names `aafke.co.uk`. Neither is
+what visitors see: the domain's DNS points at Netlify.
 
 ## Custom domain
 
-`public/CNAME` contains `aafke.co.uk` and is copied into the build output, which
-is how GitHub Pages keeps the custom domain attached on every deploy. Don't
-delete it.
+DNS is managed at IONOS:
 
-### DNS records to create at IONOS
+| Type  | Host | Value                      |
+|-------|------|----------------------------|
+| A     | @    | 75.2.60.5                  |
+| CNAME | www  | aafke-co-uk.netlify.app.   |
 
-DNS must resolve to GitHub *before* GitHub will issue the HTTPS certificate and
-accept the domain, so do this step first.
-
-Four `A` records on the apex, all with host `@`:
-
-| Type | Host | Value           |
-|------|------|-----------------|
-| A    | @    | 185.199.108.153 |
-| A    | @    | 185.199.109.153 |
-| A    | @    | 185.199.110.153 |
-| A    | @    | 185.199.111.153 |
-
-Optionally the same four as `AAAA` for IPv6:
-`2606:50c0:8000::153`, `2606:50c0:8001::153`, `2606:50c0:8002::153`,
-`2606:50c0:8003::153`
-
-And one `CNAME` so the `www` form works too:
-
-| Type  | Host | Value                    |
-|-------|------|--------------------------|
-| CNAME | www  | aafkebeukema.github.io.  |
-
-Remove any IONOS parking/forwarding record on `@` first — it will conflict.
-
-### Then, in GitHub
-
-Settings -> Pages -> Custom domain -> enter `aafke.co.uk` -> Save. Once the
-certificate is issued (usually minutes, occasionally up to an hour), tick
-**Enforce HTTPS**.
+`www.aafke.co.uk` redirects to `aafke.co.uk`. Netlify provides the HTTPS
+certificate.
 
 Verify from a terminal:
 
 ```bash
-dig +short aafke.co.uk
-curl -sSI https://aafke.co.uk | head -1
+dig +short aafke.co.uk                       # 75.2.60.5
+curl -sSI https://aafke.co.uk | grep -i server  # server: Netlify
 ```
-
 
 ## Monitoring /talktome
 
